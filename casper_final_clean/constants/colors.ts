@@ -32,6 +32,7 @@ export const COLORS = {
   glassBorder: 'rgba(255, 255, 255, 0.2)',
   glass: 'rgba(255, 255, 255, 0.05)',
   obsidian: '#0F0F0F',
+  deepCharcoal: '#1A1A1A',
   
   // Gradients
   goldGradient: ['#FFD700', '#B8860B'],
