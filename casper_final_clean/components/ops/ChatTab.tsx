@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   bubbleTheirs: { alignSelf: 'flex-start', backgroundColor: COLORS.glass },
   bubbleText: { color: COLORS.obsidian, fontWeight: '800' },
   time: { marginTop: 6, fontSize: 10, color: COLORS.obsidian, opacity: 0.7, textAlign: 'right' },
-  composer: { flexDirection: 'row', padding: 12, borderTopWidth: 1, borderTopColor: COLORS.glassBorder, gap: 10, backgroundColor: COLORS.deepCharcoal },
+  composer: { flexDirection: 'row', padding: 12, borderTopWidth: 1, borderTopColor: COLORS.glassBorder, gap: 10, backgroundColor: COLORS.darkCharcoal },
   input: { flex: 1, backgroundColor: COLORS.glass, borderColor: COLORS.glassBorder, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, color: COLORS.pureWhite },
   send: { paddingHorizontal: 14, borderRadius: 12, backgroundColor: COLORS.electricBlue, alignItems: 'center', justifyContent: 'center' },
   sendText: { color: COLORS.pureWhite, fontWeight: '900' },

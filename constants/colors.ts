@@ -20,7 +20,6 @@ export const COLORS = {
   lightGray: '#9CA3AF',
   mutedGray: '#6B7280',
   alertRed: '#EF4444',
-  error: '#EF4444',
   background: '#000000',
   surface: '#1A1A1A',
   card: '#1A1A1A',
@@ -28,10 +27,6 @@ export const COLORS = {
   border: 'rgba(255, 255, 255, 0.1)',
   text: '#FFFFFF',
   primary: '#FFD700',
-  silver: '#C0C0C0',
-  glassBorder: 'rgba(255, 255, 255, 0.2)',
-  glass: 'rgba(255, 255, 255, 0.05)',
-  obsidian: '#0F0F0F',
   
   // Gradients
   goldGradient: ['#FFD700', '#B8860B'],

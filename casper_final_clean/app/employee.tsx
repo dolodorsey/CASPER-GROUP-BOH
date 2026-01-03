@@ -72,17 +72,14 @@ function TabButton({ title, icon: Icon, isActive, onPress, badge }: TabButtonPro
 
 export default function EmployeePortal() {
   const { isBooting, userId, profile } = useAuth();
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   if (isBooting) return null;
   if (!userId) return <Redirect href="/login" />;
   if (!profile) return <Redirect href="/login" />;
-  if (profile.role === "admin") return <Redirect href="/admin" />;
-  if (profile.role === "partner") return <Redirect href="/partner" />;
-  if (profile.role !== "employee") return <Redirect href="/login" />;
-  
+  if (profile.role !== "employee") return <Redirect href={`/${profile.role}`} />;
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const employeeLocationId = profile.location_id ?? null;
 
   const handleRefresh = async () => {
@@ -206,7 +203,7 @@ export default function EmployeePortal() {
     case 'messages':
       return <ChatTab activeLocationId={employeeLocationId} />;
 
-    case 'performance':
+    case 'training':
         return (
           <View style={styles.tabContentContainer}>
             <Text style={styles.sectionTitle}>TRAINING MODULES</Text>
@@ -259,7 +256,7 @@ export default function EmployeePortal() {
           </View>
         );
 
-      case 'communication':
+      case 'messages':
         return (
           <View style={styles.tabContentContainer}>
             <Text style={styles.sectionTitle}>TEAM MESSAGES</Text>
