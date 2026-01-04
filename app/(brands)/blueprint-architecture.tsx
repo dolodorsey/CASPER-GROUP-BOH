@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import COLORS from '@/constants/colors';
-// Blueprint Architecture: Design System & Component Library
+import { COLORS } from '@/constants/colors';
+  ;// Blueprint Architecture: Design System & Component Library
 // Manages architectural components, design patterns, and system blueprints
 
 interface Blueprint {
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   goldBorder: {
     flex: 1,
     borderWidth: 3,
-    borderColor: COLORS.accent,
+    borderColor: COLORS.moltenGold,
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: COLORS.accent,
+    borderColor: COLORS.moltenGold,
   },
   brandTitle: {
     fontSize: 32,
@@ -162,12 +162,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORS.accent,
+    borderColor: COLORS.moltenGold,
   },
   metricValue: {
     fontSize: 28,
     fontWeight: '700',
-    color: COLORS.accent,
+    color: COLORS.moltenGold,
     marginBottom: 4,
   },
   metricLabel: {
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: COLORS.accent,
+    borderColor: COLORS.moltenGold,
   },
   buttonText: {
     color: COLORS.white,
