@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import COLORS from '../../../constants/colors';
-
+import COLORS from '@/constants/colors';
 // Blueprint Architecture: Design System & Component Library
 // Manages architectural components, design patterns, and system blueprints
 
