@@ -3,15 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AdminState, Alert, KPIMetric, Location, Brand, Incident, Ticket } from '@/types/admin';
-import { 
-  WASHINGTON_PARQ_LOCATION, 
-  ADMIN_BRANDS, 
-  LIVE_ALERTS, 
-  DASHBOARD_KPIS, 
-  RECENT_INCIDENTS,
-  ACTIVE_TICKETS,
-  MOCK_USERS 
-} from '@/mocks/washingtonParq';
+import { supabase } from '@/lib/supabase';
 
 interface AdminContextType extends AdminState {
   setActiveTab: (tab: string) => void;
@@ -30,12 +22,6 @@ interface AdminContextType extends AdminState {
   isLoadingKPIs: boolean;
   isApplyingPlaybook: boolean;
 }
-
-const simulateApiCall = <T,>(data: T, delay = 500): Promise<T> => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(data), delay);
-  });
-};
 
 export const [AdminProvider, useAdmin] = createContextHook<AdminContextType>(() => {
   const queryClient = useQueryClient();
@@ -63,10 +49,19 @@ export const [AdminProvider, useAdmin] = createContextHook<AdminContextType>(() 
           }));
         }
         
-        setAdminState(prev => ({
-          ...prev,
-          currentUser: MOCK_USERS[0],
-        }));
+        // Load current user from Supabase
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData?.user) {
+          setAdminState(prev => ({
+            ...prev,
+            currentUser: {
+              id: userData.user.id,
+              email: userData.user.email || '',
+              name: userData.user.user_metadata?.name || 'Admin User',
+              role: 'admin',
+            },
+          }));
+        }
       } catch (error) {
         console.error('Failed to load admin state:', error);
       }
@@ -88,72 +83,128 @@ export const [AdminProvider, useAdmin] = createContextHook<AdminContextType>(() 
     }
   }, []);
 
+  // Fetch alerts from Supabase
   const alertsQuery = useQuery({
     queryKey: ['admin', 'alerts'],
-    queryFn: () => simulateApiCall(LIVE_ALERTS),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('cg_alerts')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
     refetchInterval: 30000,
   });
 
+  // Fetch KPIs from Supabase
   const kpisQuery = useQuery({
     queryKey: ['admin', 'kpis'],
-    queryFn: () => simulateApiCall(DASHBOARD_KPIS),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('cg_kpis')
+        .select('*')
+        .order('updated_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
     refetchInterval: 10000,
   });
 
+  // Fetch locations from Supabase
   const locationsQuery = useQuery({
     queryKey: ['admin', 'locations'],
-    queryFn: () => simulateApiCall([WASHINGTON_PARQ_LOCATION]),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('cg_locations')
+        .select('*')
+        .eq('access_enabled', true);
+      
+      if (error) throw error;
+      return data || [];
+    },
   });
 
+  // Fetch brands from Supabase
   const brandsQuery = useQuery({
     queryKey: ['admin', 'brands'],
-    queryFn: () => simulateApiCall(ADMIN_BRANDS),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('cg_brands')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data || [];
+    },
   });
 
+  // Fetch incidents from Supabase
   const incidentsQuery = useQuery({
     queryKey: ['admin', 'incidents'],
-    queryFn: () => simulateApiCall(RECENT_INCIDENTS),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('cg_incidents')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (error) throw error;
+      return data || [];
+    },
   });
 
+  // Fetch tickets from Supabase
   const ticketsQuery = useQuery({
     queryKey: ['admin', 'tickets'],
-    queryFn: () => simulateApiCall(ACTIVE_TICKETS),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('cg_tickets')
+        .select('*')
+        .in('status', ['open', 'in_progress'])
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
     refetchInterval: 5000,
   });
 
   const acknowledgeAlertMutation = useMutation({
     mutationFn: async (alertId: string) => {
-      await simulateApiCall({ success: true }, 300);
-      return alertId;
+      const { data, error } = await supabase
+        .from('cg_alerts')
+        .update({ status: 'acknowledged' })
+        .eq('id', alertId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
     },
-    onSuccess: (alertId) => {
-      queryClient.setQueryData(['admin', 'alerts'], (old: Alert[] | undefined) => {
-        if (!old) return old;
-        return old.map(alert => 
-          alert.id === alertId 
-            ? { ...alert, status: 'acknowledged' as const }
-            : alert
-        );
-      });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'alerts'] });
     },
   });
 
   const applyPlaybookMutation = useMutation({
     mutationFn: async (alertId: string) => {
-      await simulateApiCall({ success: true }, 2000);
-      return alertId;
-    },
-    onSuccess: (alertId) => {
-      queryClient.setQueryData(['admin', 'alerts'], (old: Alert[] | undefined) => {
-        if (!old) return old;
-        return old.map(alert => 
-          alert.id === alertId 
-            ? { ...alert, status: 'resolved' as const }
-            : alert
-        );
-      });
+      const { data, error } = await supabase
+        .from('cg_alerts')
+        .update({ status: 'resolved' })
+        .eq('id', alertId)
+        .select()
+        .single();
+      
+      if (error) throw error;
       
       console.log(`Playbook applied for alert ${alertId} - syncing to Employee & Partner portals`);
+      return data;
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin'] });
     },
   });
