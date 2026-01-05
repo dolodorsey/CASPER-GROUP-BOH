@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '@/constants/colors';
+import COLORS from '../../constants/colors';
+
 // Pinky Promise ATL: Philanthropic Event Tracker
 // Manages community events, fundraisers, and impact metrics
 
