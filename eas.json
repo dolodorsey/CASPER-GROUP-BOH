@@ -21,10 +21,8 @@
     },
     "production": {
       "ios": {
-        "bundleIdentifier": "com.caspergroup.controlcenter"
       },
       "android": {
-        "package": "com.caspergroup.controlcenter"
       }
     }
   },
