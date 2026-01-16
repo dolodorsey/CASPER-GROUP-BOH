@@ -166,6 +166,13 @@ export default function LandingScreen() {
                   colors={[COLORS.emeraldGreen, COLORS.deepGreen]}
                   onPress={() => handlePortalPress('partner')}
                 />
+                              <PortalButton
+                title="Command Dashboard"
+                subtitle="Live Operations Center"
+                icon={Activity}
+                colors={[COLORS.electricBlue, COLORS.deepBlue]}
+                onPress={() => handlePortalPress('command')}
+              />
               </View>
             </View>
 
