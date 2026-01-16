@@ -5,6 +5,7 @@ import { CasperProvider } from "@/providers/CasperProvider";
 import { trpc, trpcClient } from "@/lib/trpc";
 
 function RootLayoutNav() {
+    console.log("[BUILD_SHA_STAMP]", "RBAC-AccessGate-AdminLayout", "2026-01-16-001");
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
