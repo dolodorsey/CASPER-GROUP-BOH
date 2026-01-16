@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Casper Group BOH",
-    "slug": "casper-control-center",
+    "slug": "casper-boh",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -15,14 +15,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.rork.casper-control-center"
+      "bundleIdentifier": "app.rork.casper-boh"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.casper_control_center"
+      "package": "app.rork.casper_boh"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
