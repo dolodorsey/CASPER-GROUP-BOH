@@ -35,7 +35,14 @@ const { width, height } = Dimensions.get("window");
 
 export default function LandingScreen() {
   const router = useRouter();
-  const { hasSeenIntro, setHasSeenIntro } = useCasper();
+
+    // Emergency boot patch: guard against undefined context
+  const casper = useCasper();
+  if (!casper) {
+    console.warn('[LandingScreen] CasperProvider not ready, returning null');
+    return null;
+  }
+  const { hasSeenIntro, setHasSeenIntro } = casper;
   const [introComplete, setIntroComplete] = useState(hasSeenIntro);
   
   console.log('[LandingScreen] Render - hasSeenIntro:', hasSeenIntro, 'introComplete:', introComplete);
