@@ -1,15 +1,16 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import createContextHook from '@nkzw/create-context-hook';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-interface CasperContextType {
+type CasperContextType = {
   hasSeenIntro: boolean;
   setHasSeenIntro: (value: boolean) => void;
   selectedPortal: string | null;
   setSelectedPortal: (portal: string | null) => void;
-}
+};
 
-export const [CasperProvider, useCasper] = createContextHook<CasperContextType>(() => {
+const CasperContext = createContext<CasperContextType | null>(null);
+
+export function CasperProvider({ children }: { children: React.ReactNode }) {
   const [hasSeenIntro, setHasSeenIntroState] = useState(false);
   const [selectedPortal, setSelectedPortal] = useState<string | null>(null);
 
@@ -36,10 +37,27 @@ export const [CasperProvider, useCasper] = createContextHook<CasperContextType>(
       });
   }, []);
 
-  return useMemo(() => ({
-    hasSeenIntro,
-    setHasSeenIntro,
-    selectedPortal,
-    setSelectedPortal,
-  }), [hasSeenIntro, setHasSeenIntro, selectedPortal]);
-});
+  const value = useMemo(
+    () => ({
+      hasSeenIntro,
+      setHasSeenIntro,
+      selectedPortal,
+      setSelectedPortal,
+    }),
+    [hasSeenIntro, setHasSeenIntro, selectedPortal]
+  );
+
+  return (
+    <CasperContext.Provider value={value}>
+      {children}
+    </CasperContext.Provider>
+  );
+}
+
+export function useCasper() {
+  const ctx = useContext(CasperContext);
+  if (!ctx) {
+    throw new Error('useCasper must be used within <CasperProvider />');
+  }
+  return ctx;
+}
