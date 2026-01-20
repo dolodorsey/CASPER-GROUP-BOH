@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { CasperProvider } from "@/providers/CasperProvider";
+import { AuthProvider } from "@/providers/AuthProvider";
 import { trpc, trpcClient } from "@/lib/trpc";
 
 function RootLayoutNav() {
@@ -23,9 +24,11 @@ export default function RootLayout() {
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
-        <CasperProvider>
-          <RootLayoutNav />
-        </CasperProvider>
+        <AuthProvider>
+          <CasperProvider>
+            <RootLayoutNav />
+          </CasperProvider>
+        </AuthProvider>
       </QueryClientProvider>
     </trpc.Provider>
   );

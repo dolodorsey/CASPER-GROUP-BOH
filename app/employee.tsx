@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -21,9 +22,11 @@ import {
   AlertCircle,
   TrendingUp,
   Award,
-  Activity
+  Activity,
+  ShieldAlert
 } from "lucide-react-native";
 import { COLORS } from "@/constants/colors";
+import { useAuth } from "@/providers/AuthProvider";
 
 interface TabButtonProps {
   title: string;
@@ -62,8 +65,51 @@ function TabButton({ title, icon: Icon, isActive, onPress, badge }: TabButtonPro
 
 export default function EmployeePortal() {
   const router = useRouter();
+  const { profile, isBooting } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  if (isBooting) {
+    return (
+      <View style={styles.container}>
+        <LinearGradient
+          colors={[COLORS.deepBlack, COLORS.darkCharcoal]}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View style={styles.gateContainer}>
+          <ActivityIndicator size="large" color={COLORS.electricBlue} />
+          <Text style={styles.gateText}>Loading...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  const allowedRoles = ['employee', 'admin'];
+  if (!profile || !allowedRoles.includes(profile.role)) {
+    return (
+      <View style={styles.container}>
+        <LinearGradient
+          colors={[COLORS.deepBlack, COLORS.darkCharcoal]}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.gateContainer}>
+            <ShieldAlert color={COLORS.alertRed} size={64} />
+            <Text style={styles.gateTitle}>ACCESS DENIED</Text>
+            <Text style={styles.gateText}>
+              You do not have permission to access the Employee Portal.
+            </Text>
+            <Text style={styles.gateSubtext}>
+              Required role: Employee or Admin
+            </Text>
+            <TouchableOpacity style={styles.gateButton} onPress={() => router.back()}>
+              <Text style={styles.gateButtonText}>Go Back</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -750,6 +796,44 @@ const styles = StyleSheet.create({
   },
   composeButtonText: {
     fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.pureWhite,
+  },
+  gateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  gateTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: COLORS.alertRed,
+    marginTop: 24,
+    letterSpacing: 2,
+  },
+  gateText: {
+    fontSize: 16,
+    color: COLORS.platinum,
+    textAlign: 'center',
+    marginTop: 12,
+    lineHeight: 24,
+  },
+  gateSubtext: {
+    fontSize: 13,
+    color: COLORS.lightGray,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  gateButton: {
+    marginTop: 32,
+    backgroundColor: COLORS.electricBlue,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+  },
+  gateButtonText: {
+    fontSize: 16,
     fontWeight: '700',
     color: COLORS.pureWhite,
   },
