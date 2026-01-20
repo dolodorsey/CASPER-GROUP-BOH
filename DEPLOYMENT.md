@@ -188,6 +188,181 @@ EAS Build automatically handles:
 
 ---
 
+## 🚀 iOS App Store Deployment - Complete Guide
+
+### Deployment Status
+- **Bundle Identifier**: `app.rork.casper-boh` ✅
+- **GitHub Actions Workflow**: Configured ✅
+- **Deployment Script**: Created ✅
+- **Ready for App Store**: YES ✅
+
+### Three Deployment Methods
+
+#### Method 1: Automated via GitHub Actions (Recommended)
+
+Every push to `main` branch automatically triggers an iOS production build.
+
+**How it works:**
+1. Push code to `main` branch
+2. GitHub Actions workflow (`.github/workflows/deploy.yml`) runs
+3. EAS builds iOS production app
+4. Monitor at https://expo.dev
+
+**Setup required:**
+- Configure `EXPO_TOKEN` in GitHub repository secrets
+- Go to: Settings → Secrets → Actions → New repository secret
+- Name: `EXPO_TOKEN`
+- Value: Your Expo token from https://expo.dev/accounts/[account]/settings/access-tokens
+
+#### Method 2: Manual Deployment Script
+
+Run the provided script for one-command deployment:
+
+```bash
+# Make executable (first time)
+chmod +x .deploy-complete.sh
+
+# Run deployment
+./.deploy-complete.sh
+```
+
+**The script automatically:**
+1. Installs EAS CLI globally
+2. Handles authentication (EXPO_TOKEN or interactive)
+3. Triggers iOS production build
+4. Provides next steps
+
+#### Method 3: Manual EAS Commands
+
+For advanced users:
+
+```bash
+# Install EAS CLI
+npm install -g eas-cli
+
+# Login
+eas login
+
+# Build for production
+eas build --platform ios --profile production
+
+# Submit to App Store (after build completes)
+eas submit --platform ios --profile production
+```
+
+### Build Configuration
+
+Production iOS build settings in `eas.json`:
+
+```json
+{
+  "build": {
+    "production": {
+      "ios": {
+        "bundleIdentifier": "app.rork.casper-boh"
+      }
+    }
+  }
+}
+```
+
+### Post-Build Steps
+
+#### 1. Monitor Build
+- Visit https://expo.dev
+- Check build status and logs
+- Build typically takes 15-30 minutes
+
+#### 2. Submit to App Store
+
+Once build completes:
+
+```bash
+eas submit --platform ios --profile production
+```
+
+**You'll need:**
+- Apple Developer account ($99/year)
+- App Store Connect API Key OR
+- Apple ID with app-specific password
+
+#### 3. App Store Connect
+
+1. Log in to https://appstoreconnect.apple.com
+2. Select your app (or create new)
+3. Complete metadata:
+   - App name, description, keywords
+   - Screenshots (required sizes)
+   - Privacy policy URL
+   - Support URL
+4. Submit for review
+5. Apple review typically takes 1-3 days
+
+### Troubleshooting
+
+#### Build Fails
+
+**Check logs:**
+```bash
+eas build:list
+eas build:view [BUILD_ID]
+```
+
+**Common issues:**
+- Missing `EXPO_TOKEN`: Add to GitHub secrets or environment
+- Bundle ID mismatch: Verify `eas.json` has `app.rork.casper-boh`
+- iOS certificates: Run `eas credentials` to manage
+
+#### Authentication Issues
+
+**Reset authentication:**
+```bash
+eas logout
+eas login
+```
+
+**Verify setup:**
+```bash
+eas whoami
+eas credentials
+```
+
+#### GitHub Actions Not Running
+
+1. Check `.github/workflows/deploy.yml` exists
+2. Verify `EXPO_TOKEN` in repository secrets
+3. Check Actions tab for logs
+4. Ensure workflow has permissions
+
+### Files Reference
+
+- **`.github/workflows/deploy.yml`**: Automated build workflow
+- **`.deploy-complete.sh`**: One-command deployment script  
+- **`eas.json`**: EAS build configuration
+- **`app.json`**: Expo app configuration
+
+### Quick Reference Commands
+
+```bash
+# Check EAS CLI version
+eas --version
+
+# View account info
+eas whoami
+
+# List recent builds
+eas build:list
+
+# View specific build
+eas build:view [BUILD_ID]
+
+# Manage iOS credentials
+eas credentials
+
+# Submit latest build
+eas submit --platform ios --latest
+```
+
 ## 📞 Support & Resources
 
 - **Expo Documentation**: https://docs.expo.dev/
