@@ -1,8 +1,7 @@
 {
   "expo": {
     "name": "Casper Group BOH",
-    "slug": "casper-boh",
-    "version": "1.0.0",
+"slug": "casper-control-center",    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "caspercontrol",
