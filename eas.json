@@ -21,7 +21,6 @@
     },
     "production": {
       "ios": {
-                "bundleIdentifier": "app.rork.casper-boh"
       },
       "android": {
       }
