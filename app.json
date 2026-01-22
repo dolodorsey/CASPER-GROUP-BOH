@@ -2,6 +2,7 @@
   "expo": {
     "name": "Casper Group BOH",
 "slug": "casper-control-center",    "version": "1.0.0",
+        "owner": "thekollective",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "caspercontrol",
