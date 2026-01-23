@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import createContextHook from "@nkzw/create-context-hook";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export type Role = "admin" | "employee" | "partner";
 
@@ -34,6 +34,7 @@ type AuthContextType = {
 };
 
 export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => {
+  const mountedRef = useRef(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isBooting, setIsBooting] = useState(true);
@@ -41,6 +42,11 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
   const [activeLocationId, _setActiveLocationId] = useState<string | null>(null);
   const [allowedBrands, setAllowedBrands] = useState<BrandSummary[]>([]);
   const [activeBrandId, _setActiveBrandId] = useState<string | null>(null);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const fetchProfile = async (uid: string) => {
     const { data, error } = await supabase
@@ -71,43 +77,59 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
   }, []);
 
   useEffect(() => {
-    let mounted = true;
+    let cancelled = false;
 
     const boot = async () => {
-      const { data } = await supabase.auth.getSession();
-      const uid = data.session?.user.id ?? null;
-
-      if (!mounted) return;
-      setUserId(uid);
-
-      if (uid) {
-        const p = await fetchProfile(uid);
-        if (!mounted) return;
-        setProfile(p);
-      } else {
-        setProfile(null);
+      if (!isSupabaseConfigured) {
+        console.log('[Auth] Supabase not configured, skipping auth boot');
+        setIsBooting(false);
+        return;
       }
 
-      setIsBooting(false);
+      try {
+        const { data } = await supabase.auth.getSession();
+        const uid = data.session?.user.id ?? null;
+
+        if (cancelled) return;
+        setUserId(uid);
+
+        if (uid) {
+          const p = await fetchProfile(uid);
+          if (cancelled) return;
+          setProfile(p);
+        } else {
+          setProfile(null);
+        }
+      } catch (err) {
+        console.error('[Auth] Boot error:', err);
+      } finally {
+        if (!cancelled) setIsBooting(false);
+      }
     };
 
     boot();
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const uid = session?.user.id ?? null;
-      setUserId(uid);
+    let subscription: { unsubscribe: () => void } | null = null;
+    
+    if (isSupabaseConfigured) {
+      const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        if (cancelled) return;
+        const uid = session?.user.id ?? null;
+        setUserId(uid);
 
-      if (uid) {
-        const p = await fetchProfile(uid);
-        setProfile(p);
-      } else {
-        setProfile(null);
-      }
-    });
+        if (uid) {
+          const p = await fetchProfile(uid);
+          if (!cancelled) setProfile(p);
+        } else {
+          setProfile(null);
+        }
+      });
+      subscription = sub.subscription;
+    }
 
     return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
+      cancelled = true;
+      subscription?.unsubscribe();
     };
   }, []);
 
