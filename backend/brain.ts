@@ -51,8 +51,8 @@ brain.get("/health", (c) => {
   });
 });
 
-function jsonError(c: any, error: string, status: number) {
-  return c.json({ error }, { status });
+function jsonError(c: any, error: string, status: 400 | 401 | 403 | 404 | 500 | 502) {
+  return c.json({ error }, status);
 }
 
 brain.post("/airtable/query", async (c) => {
@@ -92,7 +92,7 @@ brain.post("/airtable/query", async (c) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("[Brain] Airtable error:", errorText);
-      return jsonError(c, "Airtable request failed", response.status as number);
+      return jsonError(c, "Airtable request failed", 502);
     }
 
     const data = await response.json();
@@ -137,7 +137,7 @@ brain.post("/airtable/create", async (c) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("[Brain] Airtable create error:", errorText);
-      return jsonError(c, "Airtable request failed", response.status as number);
+      return jsonError(c, "Airtable request failed", 502);
     }
 
     const data = await response.json();
@@ -187,7 +187,7 @@ brain.post("/n8n/execute", async (c) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("[Brain] n8n error:", errorText);
-      return jsonError(c, "n8n request failed", response.status as number);
+      return jsonError(c, "n8n request failed", 502);
     }
 
     const data = await response.json();
