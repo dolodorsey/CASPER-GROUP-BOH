@@ -11,7 +11,7 @@ export function AccessGate({ allow, children }: { allow: string[]; children: Rea
     if (isBooting) return;
 
     if (!profile) {
-      router.replace("/login");
+      router.replace("/auth/login");
     } else if (!allow.includes(profile.role)) {
       router.replace(`/${profile.role}`);
     }
