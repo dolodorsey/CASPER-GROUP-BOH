@@ -34,10 +34,10 @@ const createMockClient = (): SupabaseClient => {
   };
   
   const mockFrom = () => ({
-    select: () => ({ eq: () => ({ single: async () => ({ data: null, error: { message: 'Not configured' } }) }), order: async () => ({ data: [], error: null }) }),
-    insert: async () => ({ data: null, error: { message: 'Not configured' } }),
-    update: async () => ({ data: null, error: { message: 'Not configured' } }),
-    delete: async () => ({ data: null, error: { message: 'Not configured' } }),
+    select: () => ({ eq: () => ({ single: async () => ({ data: null, error: { message: 'Supabase not configured' } }) }), order: async () => ({ data: [], error: null }) }),
+    insert: async () => ({ data: null, error: { message: 'Supabase not configured' } }),
+    update: async () => ({ data: null, error: { message: 'Supabase not configured' } }),
+    delete: async () => ({ data: null, error: { message: 'Supabase not configured' } }),
   });
   
   return { auth: mockAuth, from: mockFrom } as unknown as SupabaseClient;
