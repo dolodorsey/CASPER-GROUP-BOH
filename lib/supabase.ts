@@ -2,15 +2,9 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const supabaseUrl = 'https://qhgmukwoennurwuvmbhy.supabase.co';
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoZ211a3dvZW5udXJ3dXZtYmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5ODI1NDksImV4cCI6MjA4MjU1ODU0OX0.DhNcV9_h8_wdvKHfGyK9kdxKTlT6ZJ1t-JbCKBGD-Kw';
 
 export const isSupabaseConfigured = Boolean(supabaseAnonKey && supabaseAnonKey.trim().length > 10);
-
-console.log('[Supabase] Config check:', { 
-  hasKey: Boolean(supabaseAnonKey), 
-  keyLength: supabaseAnonKey?.length ?? 0,
-  isConfigured: isSupabaseConfigured 
-});
 
 let supabaseInstance: SupabaseClient | null = null;
 
@@ -24,13 +18,10 @@ if (isSupabaseConfigured && supabaseAnonKey) {
         detectSessionInUrl: false,
       },
     });
-    console.log('[Supabase] Client initialized successfully');
   } catch (err) {
     console.error('[Supabase] Failed to create client:', err);
     supabaseInstance = null;
   }
-} else {
-  console.warn('[Supabase] EXPO_PUBLIC_SUPABASE_ANON_KEY is not set - auth features disabled');
 }
 
 const createMockClient = (): SupabaseClient => {
@@ -43,10 +34,10 @@ const createMockClient = (): SupabaseClient => {
   };
   
   const mockFrom = () => ({
-    select: () => ({ eq: () => ({ single: async () => ({ data: null, error: { message: 'Supabase not configured' } }) }), order: async () => ({ data: [], error: null }) }),
-    insert: async () => ({ data: null, error: { message: 'Supabase not configured' } }),
-    update: async () => ({ data: null, error: { message: 'Supabase not configured' } }),
-    delete: async () => ({ data: null, error: { message: 'Supabase not configured' } }),
+    select: () => ({ eq: () => ({ single: async () => ({ data: null, error: { message: 'Not configured' } }) }), order: async () => ({ data: [], error: null }) }),
+    insert: async () => ({ data: null, error: { message: 'Not configured' } }),
+    update: async () => ({ data: null, error: { message: 'Not configured' } }),
+    delete: async () => ({ data: null, error: { message: 'Not configured' } }),
   });
   
   return { auth: mockAuth, from: mockFrom } as unknown as SupabaseClient;
