@@ -241,3 +241,103 @@ export function useVendors() {
     enabled: isSupabaseConfigured,
   });
 }
+
+// ─── SHIFTS (for employee portal) ───────────────────────
+export interface CgShift {
+  id: string;
+  user_id: string;
+  location_id: string;
+  role: string | null;
+  station: string | null;
+  start_time: string;
+  end_time: string;
+  status: string;
+}
+
+export function useMyShifts(userId?: string | null) {
+  return useQuery({
+    queryKey: ['cg_shifts', userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase
+        .from('cg_shifts')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('start_time', new Date(Date.now() - 7 * 86400000).toISOString())
+        .order('start_time', { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as CgShift[];
+    },
+    enabled: isSupabaseConfigured && !!userId,
+  });
+}
+
+// ─── MESSAGES (for employee portal) ─────────────────────
+export interface CgMessage {
+  id: string;
+  channel_id: string;
+  actor_id: string;
+  body: string;
+  priority: string;
+  created_at: string;
+}
+
+export function useMessages(channelId?: string) {
+  return useQuery({
+    queryKey: ['cg_messages', channelId],
+    queryFn: async () => {
+      let q = supabase.from('cg_messages').select('*').order('created_at', { ascending: false }).limit(20);
+      if (channelId) q = q.eq('channel_id', channelId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as CgMessage[];
+    },
+    enabled: isSupabaseConfigured,
+    refetchInterval: 15_000,
+  });
+}
+
+// ─── TRAINING ASSIGNMENTS ───────────────────────────────
+export interface CgTrainingAssignment {
+  id: string;
+  module_id: string;
+  user_id: string;
+  status: string;
+  score: number | null;
+  due_at: string | null;
+  completed_at: string | null;
+}
+
+export function useMyTraining(userId?: string | null) {
+  return useQuery({
+    queryKey: ['cg_training_assignments', userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase
+        .from('cg_training_assignments')
+        .select('*, cg_training_modules(*)')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: isSupabaseConfigured && !!userId,
+  });
+}
+
+// ─── CHANNELS ───────────────────────────────────────────
+export function useChannels() {
+  return useQuery({
+    queryKey: ['cg_channels'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('cg_channels')
+        .select('*')
+        .eq('is_archived', false)
+        .order('name');
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: isSupabaseConfigured,
+  });
+}
