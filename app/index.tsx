@@ -231,7 +231,7 @@ export default function LandingScreen() {
               >
                 <View style={styles.flagshipHeader}>
                   <View>
-                    <Text style={styles.flagshipTitle}>WASHINGTON PARQ</Text>
+                    <Text style={styles.flagshipTitle}>ATLANTA HQ</Text>
                     <Text style={styles.flagshipSubtitle}>FLAGSHIP LOCATION</Text>
                   </View>
                   <View style={styles.flagshipBadge}>

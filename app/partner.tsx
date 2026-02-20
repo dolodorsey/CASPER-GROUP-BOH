@@ -178,7 +178,7 @@ export default function PartnerPortal() {
 
                 <View style={styles.brandCard}>
                   <View style={styles.brandHeader}>
-                    <Text style={styles.brandName}>Lemon Pepper Lous</Text>
+                    <Text style={styles.brandName}>Angel Wings</Text>
                     <Text style={styles.brandRevenue}>$122,400</Text>
                   </View>
                   <View style={styles.brandMetrics}>
@@ -237,7 +237,7 @@ export default function PartnerPortal() {
             <View style={styles.locationCard}>
               <View style={styles.locationHeader}>
                 <MapPin color={COLORS.moltenGold} size={20} />
-                <Text style={styles.locationName}>Washington Parq</Text>
+                <Text style={styles.locationName}>Atlanta HQ</Text>
                 <View style={[styles.statusDot, { backgroundColor: COLORS.emeraldGreen }]} />
               </View>
               
