@@ -107,11 +107,13 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       }
     };
 
-    boot();
-
     let subscription: { unsubscribe: () => void } | null = null;
-    
-    if (isSupabaseConfigured) {
+
+    const init = async () => {
+      await boot();
+
+      if (cancelled || !isSupabaseConfigured) return;
+
       const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
         if (cancelled) return;
         const uid = session?.user.id ?? null;
@@ -125,7 +127,9 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
         }
       });
       subscription = sub.subscription;
-    }
+    };
+
+    init();
 
     return () => {
       cancelled = true;

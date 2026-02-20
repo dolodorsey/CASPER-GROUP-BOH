@@ -15,7 +15,7 @@ export default function AuthCallback() {
         const { data, error } = await supabase.auth.exchangeCodeForSession(url);
         if (error) {
           console.error('[AuthCallback] Exchange error:', error);
-          router.replace('/auth/login');
+          router.replace('/auth/login' as any);
           return;
         }
         if (data?.session) {
@@ -24,7 +24,7 @@ export default function AuthCallback() {
         }
       } catch (err) {
         console.error('[AuthCallback] Unexpected error:', err);
-        router.replace('/auth/login');
+        router.replace('/auth/login' as any);
       }
     };
 

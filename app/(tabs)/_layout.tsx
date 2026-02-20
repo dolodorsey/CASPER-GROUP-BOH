@@ -20,15 +20,6 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="active-systems"
         options={{
           title: 'Active Systems',
