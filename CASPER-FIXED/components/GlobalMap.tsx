@@ -121,7 +121,7 @@ export function GlobalMap() {
             <View style={styles.locationFooter}>
               {location.status === 'surge' ? (
                 <Activity color={COLORS.moltenGold} size={12} />
-              ) : location.status === 'maintenance' ? (
+              ) : (location.status as string) === 'maintenance' ? (
                 <AlertCircle color={COLORS.alertRed} size={12} />
               ) : null}
               <Text style={styles.locationStatus}>
