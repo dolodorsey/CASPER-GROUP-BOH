@@ -27,6 +27,7 @@ import {
 } from "lucide-react-native";
 import { COLORS } from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
+import { useKpis, useAlerts } from "@/hooks/useSupabaseData";
 
 interface TabButtonProps {
   title: string;
@@ -67,6 +68,12 @@ export default function EmployeePortal() {
   const router = useRouter();
   const { profile, isBooting } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const { data: liveKpis } = useKpis();
+  const { data: liveAlerts } = useAlerts();
+  const ordersKpi = liveKpis?.find(k => k.name.includes("Orders"));
+  const slaKpi = liveKpis?.find(k => k.name.includes("SLA"));
+  const ratingKpi = liveKpis?.find(k => k.name.includes("Rating"));
+  const alertCount = liveAlerts?.filter(a => a.status === "active").length ?? 0;
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   if (isBooting) {
@@ -138,23 +145,23 @@ export default function EmployeePortal() {
               <View style={styles.overviewGrid}>
                 <View style={styles.overviewCard}>
                   <Clock color={COLORS.electricBlue} size={24} />
-                  <Text style={styles.overviewValue}>6h 30m</Text>
-                  <Text style={styles.overviewLabel}>Shift Duration</Text>
+                  <Text style={styles.overviewValue}>{ordersKpi ? ordersKpi.value : "—"}</Text>
+                  <Text style={styles.overviewLabel}>Active Orders</Text>
                 </View>
                 <View style={styles.overviewCard}>
                   <CheckCircle color={COLORS.emeraldGreen} size={24} />
-                  <Text style={styles.overviewValue}>47</Text>
-                  <Text style={styles.overviewLabel}>Orders Completed</Text>
+                  <Text style={styles.overviewValue}>{slaKpi ? `${slaKpi.value}%` : "—"}</Text>
+                  <Text style={styles.overviewLabel}>SLA Compliance</Text>
                 </View>
                 <View style={styles.overviewCard}>
                   <TrendingUp color={COLORS.moltenGold} size={24} />
-                  <Text style={styles.overviewValue}>98%</Text>
-                  <Text style={styles.overviewLabel}>Performance</Text>
+                  <Text style={styles.overviewValue}>{ratingKpi ? `${ratingKpi.value}/5` : "—"}</Text>
+                  <Text style={styles.overviewLabel}>Customer Rating</Text>
                 </View>
                 <View style={styles.overviewCard}>
                   <Award color={COLORS.electricBlue} size={24} />
-                  <Text style={styles.overviewValue}>2</Text>
-                  <Text style={styles.overviewLabel}>Achievements</Text>
+                  <Text style={styles.overviewValue}>{alertCount}</Text>
+                  <Text style={styles.overviewLabel}>Active Alerts</Text>
                 </View>
               </View>
             </View>
