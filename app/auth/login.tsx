@@ -1,73 +1,42 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { COLORS } from '@/constants/colors';
-import { Chrome } from 'lucide-react-native';
-
-WebBrowser.maybeCompleteAuthSession();
+import { Mail, Lock, LogIn } from 'lucide-react-native';
 
 export default function LoginScreen() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleGoogleLogin() {
+  async function handleEmailLogin() {
+    if (!email || !password) {
+      setError('Enter your email and password');
+      return;
+    }
     try {
       setIsLoading(true);
       setError(null);
-      console.log('[Auth] Starting Google OAuth flow...');
 
-      const redirectTo = Linking.createURL('/auth/callback');
-      console.log('[Auth] Redirect URL:', redirectTo);
-
-      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo,
-          skipBrowserRedirect: true,
-        },
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
       });
 
-      if (oauthError) {
-        console.error('[Auth] OAuth error:', oauthError);
-        setError(oauthError.message);
+      if (authError) {
+        setError(authError.message);
         return;
       }
 
-      if (!data?.url) {
-        console.error('[Auth] No OAuth URL returned');
-        setError('Failed to get authentication URL');
-        return;
-      }
-
-      console.log('[Auth] Opening browser session...');
-      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-      console.log('[Auth] Browser result:', result.type);
-
-      if (result.type === 'success' && result.url) {
-        console.log('[Auth] Exchanging code for session...');
-        const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(result.url);
-        
-        if (exchangeError) {
-          console.error('[Auth] Exchange error:', exchangeError);
-          setError(exchangeError.message);
-          return;
-        }
-
-        if (sessionData?.session) {
-          console.log('[Auth] Session created successfully');
-          router.replace('/');
-        }
-      } else if (result.type === 'cancel') {
-        console.log('[Auth] User cancelled authentication');
+      if (data?.session) {
+        router.replace('/');
       }
     } catch (err) {
-      console.error('[Auth] Unexpected error:', err);
-      setError(err instanceof Error ? err.message : 'Authentication failed');
+      setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setIsLoading(false);
     }
@@ -75,13 +44,10 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={[COLORS.deepBlack, COLORS.darkCharcoal]}
-        style={StyleSheet.absoluteFillObject}
-      />
+      <LinearGradient colors={[COLORS.deepBlack, COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject} />
       
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.content}>
           <View style={styles.header}>
             <Text style={styles.logo}>CASPER</Text>
             <Text style={styles.logoSubtitle}>CONTROL™</Text>
@@ -97,115 +63,77 @@ export default function LoginScreen() {
               </View>
             )}
 
+            <View style={styles.inputContainer}>
+              <Mail color={COLORS.lightGray} size={20} />
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor={COLORS.mutedGray}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                autoComplete="email"
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Lock color={COLORS.lightGray} size={20} />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor={COLORS.mutedGray}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoComplete="password"
+              />
+            </View>
+
             <TouchableOpacity
-              style={[styles.googleButton, isLoading && styles.buttonDisabled]}
-              onPress={handleGoogleLogin}
+              style={[styles.loginButton, isLoading && styles.buttonDisabled]}
+              onPress={handleEmailLogin}
               disabled={isLoading}
             >
-              {isLoading ? (
-                <ActivityIndicator color={COLORS.deepBlack} />
-              ) : (
-                <>
-                  <Chrome color={COLORS.deepBlack} size={20} />
-                  <Text style={styles.googleButtonText}>Continue with Google</Text>
-                </>
-              )}
+              <LinearGradient colors={[COLORS.moltenGold, COLORS.darkGold]} style={styles.loginButtonGradient}>
+                {isLoading ? (
+                  <ActivityIndicator color={COLORS.deepBlack} />
+                ) : (
+                  <>
+                    <LogIn color={COLORS.deepBlack} size={20} />
+                    <Text style={styles.loginButtonText}>Sign In</Text>
+                  </>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
 
             <Text style={styles.terms}>
-              By signing in, you agree to our Terms of Service and Privacy Policy
+              Casper Group Enterprise • Authorized Personnel Only
             </Text>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.deepBlack,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 48,
-  },
-  logo: {
-    fontSize: 40,
-    fontWeight: '900',
-    color: COLORS.moltenGold,
-    letterSpacing: 8,
-  },
-  logoSubtitle: {
-    fontSize: 14,
-    color: COLORS.platinum,
-    letterSpacing: 6,
-    marginTop: 4,
-  },
-  formContainer: {
-    backgroundColor: COLORS.darkCharcoal,
-    borderRadius: 16,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: COLORS.borderGray,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLORS.pureWhite,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: COLORS.lightGray,
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  errorContainer: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: COLORS.alertRed,
-  },
-  errorText: {
-    fontSize: 13,
-    color: COLORS.alertRed,
-    textAlign: 'center',
-  },
-  googleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.pureWhite,
-    borderRadius: 12,
-    paddingVertical: 16,
-    gap: 12,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  googleButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.deepBlack,
-  },
-  terms: {
-    fontSize: 11,
-    color: COLORS.lightGray,
-    textAlign: 'center',
-    marginTop: 16,
-    lineHeight: 16,
-  },
+  container: { flex: 1, backgroundColor: COLORS.deepBlack },
+  safeArea: { flex: 1 },
+  content: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
+  header: { alignItems: 'center', marginBottom: 48 },
+  logo: { fontSize: 40, fontWeight: '900', color: COLORS.moltenGold, letterSpacing: 8 },
+  logoSubtitle: { fontSize: 14, color: COLORS.platinum, letterSpacing: 6, marginTop: 4 },
+  formContainer: { backgroundColor: COLORS.darkCharcoal, borderRadius: 16, padding: 24, borderWidth: 1, borderColor: COLORS.borderGray },
+  title: { fontSize: 24, fontWeight: '700', color: COLORS.pureWhite, textAlign: 'center', marginBottom: 8 },
+  subtitle: { fontSize: 14, color: COLORS.lightGray, textAlign: 'center', marginBottom: 24 },
+  errorContainer: { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: COLORS.alertRed },
+  errorText: { fontSize: 13, color: COLORS.alertRed, textAlign: 'center' },
+  inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.deepBlack, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 12, borderWidth: 1, borderColor: COLORS.borderGray, gap: 12 },
+  input: { flex: 1, fontSize: 16, color: COLORS.pureWhite },
+  loginButton: { borderRadius: 12, overflow: 'hidden', marginTop: 8 },
+  loginButtonGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 12 },
+  buttonDisabled: { opacity: 0.7 },
+  loginButtonText: { fontSize: 16, fontWeight: '700', color: COLORS.deepBlack },
+  terms: { fontSize: 11, color: COLORS.lightGray, textAlign: 'center', marginTop: 16, lineHeight: 16 },
 });
