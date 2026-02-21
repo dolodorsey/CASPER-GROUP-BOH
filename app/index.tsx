@@ -32,8 +32,9 @@ export default function LandingScreen() {
   const { hasSeenIntro, setHasSeenIntro } = useCasper();
   const [introComplete, setIntroComplete] = useState(hasSeenIntro);
 
-  const fadeAnim = useRef(new Animated.Value(hasSeenIntro ? 1 : 0)).current;
-  const scaleAnim = useRef(new Animated.Value(hasSeenIntro ? 1 : 0.95)).current;
+  // Always start visible (1) if intro was already seen, animate in (0→1) after fresh intro
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
 
   // Live data hooks
@@ -75,17 +76,27 @@ export default function LandingScreen() {
   const locationCount = liveLocations?.length ?? 0;
 
   useEffect(() => {
-    if (introComplete && !hasSeenIntro) {
-      Animated.parallel([
-        Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-        Animated.spring(scaleAnim, { toValue: 1, tension: 20, friction: 7, useNativeDriver: true }),
-      ]).start();
+    if (introComplete) {
+      // If coming from fresh intro, do a subtle fade-in
+      if (!hasSeenIntro) {
+        fadeAnim.setValue(0);
+        scaleAnim.setValue(0.95);
+        Animated.parallel([
+          Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+          Animated.spring(scaleAnim, { toValue: 1, tension: 20, friction: 7, useNativeDriver: true }),
+        ]).start();
+      }
       setHasSeenIntro(true);
     }
-  }, [introComplete, hasSeenIntro]);
+  }, [introComplete]);
 
   const handleIntroComplete = useCallback(() => setIntroComplete(true), []);
   const handlePortalPress = useCallback((portal: string) => router.push(`/${portal}` as any), [router]);
+
+  // Sync introComplete when hasSeenIntro loads from AsyncStorage
+  useEffect(() => {
+    if (hasSeenIntro) setIntroComplete(true);
+  }, [hasSeenIntro]);
 
   if (!introComplete) return <CinematicIntro onComplete={handleIntroComplete} />;
 
