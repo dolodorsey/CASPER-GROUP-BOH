@@ -247,6 +247,4 @@ const styles = StyleSheet.create({
   statusFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingTop: 20 },
   statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.emeraldGreen, marginRight: 8 },
   statusText: { fontSize: 11, color: COLORS.lightGray, letterSpacing: 1 },
-  warning: '#F59E0B',
-  info: '#3B82F6',
 });

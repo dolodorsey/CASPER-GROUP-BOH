@@ -48,4 +48,5 @@ export const COLORS = {
   blueGradient: ['#00BFFF', '#003F7F'],
   greenGradient: ['#50C878', '#006B3C'],
   darkGradient: ['#1A1A1A', '#000000'],
+
 };
