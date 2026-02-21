@@ -8,13 +8,11 @@ export const trpc = createTRPCReact<AppRouter>();
 
 const getBaseUrl = () => {
   const url = process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
-
   if (!url) {
-    throw new Error(
-      "Rork did not set EXPO_PUBLIC_RORK_API_BASE_URL, please use support",
-    );
+    // Return a placeholder — tRPC routes won't work but app won't crash
+    console.warn('[tRPC] EXPO_PUBLIC_RORK_API_BASE_URL not set — tRPC disabled');
+    return 'https://placeholder.invalid';
   }
-
   return url;
 };
 
