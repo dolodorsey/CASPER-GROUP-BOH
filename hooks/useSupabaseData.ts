@@ -117,6 +117,9 @@ export interface CgAlert {
   message: string | null;
   status: string;
   actionable: boolean;
+  location_id: string | null;
+  source: string | null;
+  description: string | null;
   created_at: string;
 }
 
@@ -339,5 +342,64 @@ export function useChannels() {
       return data ?? [];
     },
     enabled: isSupabaseConfigured,
+  });
+}
+
+// ─── SOPs ───
+export function useSops(category?: string) {
+  return useQuery({
+    queryKey: ['cgsops', category],
+    queryFn: async () => {
+      let q = supabase.from('cgsops').select('*').order('created_at', { ascending: false });
+      if (category) q = q.eq('category', category);
+      const { data, error } = await q;
+      if (error) { console.warn('[useSops]', error.message); return []; }
+      return data as any[];
+    },
+    enabled: isSupabaseConfigured,
+  });
+}
+
+// ─── Tasks ───
+export function useTasks(locationId?: string) {
+  return useQuery({
+    queryKey: ['cgtasks', locationId],
+    queryFn: async () => {
+      let q = supabase.from('cgtasks').select('*').order('created_at', { ascending: false });
+      if (locationId) q = q.eq('location_id', locationId);
+      const { data, error } = await q;
+      if (error) { console.warn('[useTasks]', error.message); return []; }
+      return data as any[];
+    },
+    enabled: isSupabaseConfigured,
+  });
+}
+
+// ─── Training Modules ───
+export function useTrainingModules() {
+  return useQuery({
+    queryKey: ['cg_training_modules'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('cg_training_modules').select('*').order('title');
+      if (error) { console.warn('[useTrainingModules]', error.message); return []; }
+      return data as any[];
+    },
+    enabled: isSupabaseConfigured,
+  });
+}
+
+// ─── Chat Messages ───
+export function useChatMessages(channelId?: string) {
+  return useQuery({
+    queryKey: ['cg_messages', channelId],
+    queryFn: async () => {
+      let q = supabase.from('cg_messages').select('*').order('created_at', { ascending: true });
+      if (channelId) q = q.eq('channel_id', channelId);
+      const { data, error } = await q;
+      if (error) { console.warn('[useChatMessages]', error.message); return []; }
+      return data as any[];
+    },
+    enabled: isSupabaseConfigured,
+    refetchInterval: 5000,
   });
 }

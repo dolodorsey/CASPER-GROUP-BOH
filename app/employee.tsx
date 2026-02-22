@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,7 +16,7 @@ import {
   X, 
   Users, 
   Calendar, 
-  BookOpen, 
+  BookOpen, FileText, 
   MessageSquare,
   Clock,
   CheckCircle,
@@ -27,7 +28,8 @@ import {
 } from "lucide-react-native";
 import { COLORS } from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
-import { useKpis, useAlerts } from "@/hooks/useSupabaseData";
+import { useKpis, useAlerts, useChannels, useChatMessages, useTrainingModules, useSops } from "@/hooks/useSupabaseData";
+import { supabase } from "@/lib/supabase";
 
 interface TabButtonProps {
   title: string;
@@ -66,7 +68,7 @@ function TabButton({ title, icon: Icon, isActive, onPress, badge }: TabButtonPro
 
 export default function EmployeePortal() {
   const router = useRouter();
-  const { profile, isBooting } = useAuth();
+  const { profile, isBooting, userId } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const { data: liveKpis } = useKpis();
   const { data: liveAlerts } = useAlerts();
@@ -74,6 +76,19 @@ export default function EmployeePortal() {
   const slaKpi = liveKpis?.find(k => k.name.includes("SLA"));
   const ratingKpi = liveKpis?.find(k => k.name.includes("Rating"));
   const alertCount = liveAlerts?.filter(a => a.status === "active").length ?? 0;
+  const { data: channels } = useChannels();
+  const { data: trainingModules } = useTrainingModules();
+  const { data: liveSops } = useSops();
+  const [selectedChannel, setSelectedChannel] = useState<any>(null);
+  const [chatInput, setChatInput] = useState('');
+  const { data: chatMessages, refetch: refetchChat } = useChatMessages(selectedChannel?.id);
+
+  const sendChatMessage = async () => {
+    if (!chatInput.trim() || !selectedChannel || !userId) return;
+    await supabase.from('cg_messages').insert({ channel_id: selectedChannel.id, actor_id: userId, body: chatInput.trim() });
+    setChatInput('');
+    refetchChat();
+  };
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   if (isBooting) {
@@ -268,55 +283,39 @@ export default function EmployeePortal() {
 
       case 'training':
         return (
-          <View style={styles.tabContentContainer}>
+          <ScrollView style={styles.tabContentContainer}>
             <Text style={styles.sectionTitle}>TRAINING MODULES</Text>
             
-            <View style={styles.trainingProgress}>
-              <Text style={styles.progressTitle}>Overall Progress</Text>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: '87%' }]} />
-              </View>
-              <Text style={styles.progressText}>87% Complete</Text>
-            </View>
-
             <View style={styles.trainingList}>
-              <View style={styles.trainingCard}>
-                <View style={styles.trainingHeader}>
-                  <CheckCircle color={COLORS.emeraldGreen} size={20} />
-                  <Text style={styles.trainingTitle}>Food Safety Basics</Text>
-                  <Text style={styles.trainingStatus}>Complete</Text>
+              {trainingModules?.map((t: any, i: number) => (
+                <View key={i} style={styles.trainingCard}>
+                  <View style={styles.trainingHeader}>
+                    <BookOpen color={COLORS.electricBlue} size={20} />
+                    <Text style={styles.trainingTitle}>{t.title}</Text>
+                    <Text style={styles.trainingStatus}>{t.estimated_minutes}m</Text>
+                  </View>
+                  <Text style={styles.trainingDescription}>{t.description}</Text>
                 </View>
-                <Text style={styles.trainingDescription}>
-                  Essential food safety protocols and procedures
-                </Text>
-              </View>
-
-              <View style={styles.trainingCard}>
-                <View style={styles.trainingHeader}>
-                  <Activity color={COLORS.electricBlue} size={20} />
-                  <Text style={styles.trainingTitle}>Espresso Standards</Text>
-                  <Text style={styles.trainingStatus}>In Progress</Text>
-                </View>
-                <Text style={styles.trainingDescription}>
-                  Beanzo&apos;s Speed Brew Challenge - 7/8 modules complete
-                </Text>
-                <TouchableOpacity style={styles.continueButton}>
-                  <Text style={styles.continueButtonText}>Continue Training</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.trainingCard}>
-                <View style={styles.trainingHeader}>
-                  <Clock color={COLORS.lightGray} size={20} />
-                  <Text style={styles.trainingTitle}>Patty Daddy Sauce Sealing</Text>
-                  <Text style={styles.trainingStatus}>Not Started</Text>
-                </View>
-                <Text style={styles.trainingDescription}>
-                  Advanced sauce sealing techniques and quality control
-                </Text>
-              </View>
+              ))}
+              {(!trainingModules || trainingModules.length === 0) && (
+                <Text style={styles.trainingDescription}>No training modules available</Text>
+              )}
             </View>
-          </View>
+
+            <Text style={[styles.sectionTitle, { marginTop: 20 }]}>SOPs & MENUS</Text>
+            <View style={styles.trainingList}>
+              {liveSops?.map((sop: any, i: number) => (
+                <View key={i} style={styles.trainingCard}>
+                  <View style={styles.trainingHeader}>
+                    <FileText color={sop.category === 'menu' ? COLORS.moltenGold : COLORS.emeraldGreen} size={20} />
+                    <Text style={styles.trainingTitle}>{sop.title}</Text>
+                    <Text style={styles.trainingStatus}>{sop.category}</Text>
+                  </View>
+                  <Text style={styles.trainingDescription} numberOfLines={3}>{sop.content}</Text>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
         );
 
       case 'messages':
@@ -324,42 +323,41 @@ export default function EmployeePortal() {
           <View style={styles.tabContentContainer}>
             <Text style={styles.sectionTitle}>TEAM MESSAGES</Text>
             
-            <View style={styles.messagesList}>
-              <View style={styles.messageCard}>
-                <View style={styles.messageHeader}>
-                  <Text style={styles.messageSender}>Mike Chen (Manager)</Text>
-                  <Text style={styles.messageTime}>2:30 PM</Text>
-                </View>
-                <Text style={styles.messageText}>
-                  Great job on the lunch rush today team! We hit 98% on-time delivery.
-                </Text>
+            {!selectedChannel ? (
+              <View style={styles.messagesList}>
+                {channels?.map((ch: any, i: number) => (
+                  <TouchableOpacity key={i} style={styles.messageCard} onPress={() => setSelectedChannel(ch)}>
+                    <View style={styles.messageHeader}>
+                      <Text style={styles.messageSender}>#{ch.name}</Text>
+                      <Text style={styles.messageTime}>{ch.type}</Text>
+                    </View>
+                    <Text style={styles.messageText}>Tap to open channel</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
-
-              <View style={styles.messageCard}>
-                <View style={styles.messageHeader}>
-                  <Text style={styles.messageSender}>Sarah Johnson</Text>
-                  <Text style={styles.messageTime}>1:45 PM</Text>
+            ) : (
+              <View style={styles.messagesList}>
+                <TouchableOpacity style={{ marginBottom: 12 }} onPress={() => setSelectedChannel(null)}>
+                  <Text style={{ color: COLORS.electricBlue, fontSize: 13 }}>← Back to channels</Text>
+                </TouchableOpacity>
+                {chatMessages?.map((m: any, i: number) => (
+                  <View key={i} style={styles.messageCard}>
+                    <View style={styles.messageHeader}>
+                      <Text style={styles.messageSender}>{m.actor_id === userId ? 'You' : 'Team'}</Text>
+                      <Text style={styles.messageTime}>{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                    </View>
+                    <Text style={styles.messageText}>{m.body}</Text>
+                  </View>
+                ))}
+                {(!chatMessages || chatMessages.length === 0) && <Text style={styles.messageText}>No messages yet</Text>}
+                <View style={{ flexDirection: 'row', marginTop: 12, gap: 8 }}>
+                  <TextInput style={{ flex: 1, backgroundColor: '#1a1a1a', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, color: COLORS.pureWhite, borderWidth: 1, borderColor: COLORS.borderGray }} placeholder="Message..." placeholderTextColor={COLORS.lightGray} value={chatInput} onChangeText={setChatInput} />
+                  <TouchableOpacity style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.electricBlue, alignItems: 'center', justifyContent: 'center' }} onPress={sendChatMessage}>
+                    <MessageSquare color={COLORS.pureWhite} size={16} />
+                  </TouchableOpacity>
                 </View>
-                <Text style={styles.messageText}>
-                  Reminder: Fryer maintenance scheduled for 4 PM. Please complete all orders by 3:45.
-                </Text>
               </View>
-
-              <View style={styles.messageCard}>
-                <View style={styles.messageHeader}>
-                  <Text style={styles.messageSender}>System Alert</Text>
-                  <Text style={styles.messageTime}>12:15 PM</Text>
-                </View>
-                <Text style={styles.messageText}>
-                  Mojo Juice surge prediction +14% for weekend. Extra prep scheduled.
-                </Text>
-              </View>
-            </View>
-
-            <TouchableOpacity style={styles.composeButton}>
-              <MessageSquare color={COLORS.pureWhite} size={20} />
-              <Text style={styles.composeButtonText}>Send Message</Text>
-            </TouchableOpacity>
+            )}
           </View>
         );
 
