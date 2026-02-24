@@ -348,9 +348,9 @@ export function useChannels() {
 // ─── SOPs ───
 export function useSops(category?: string) {
   return useQuery({
-    queryKey: ['cgsops', category],
+    queryKey: ['cg_sops', category],
     queryFn: async () => {
-      let q = supabase.from('cgsops').select('*').order('created_at', { ascending: false });
+      let q = supabase.from('cg_sops').select('*').order('created_at', { ascending: false });
       if (category) q = q.eq('category', category);
       const { data, error } = await q;
       if (error) { console.warn('[useSops]', error.message); return []; }
@@ -363,9 +363,9 @@ export function useSops(category?: string) {
 // ─── Tasks ───
 export function useTasks(locationId?: string) {
   return useQuery({
-    queryKey: ['cgtasks', locationId],
+    queryKey: ['cg_tasks', locationId],
     queryFn: async () => {
-      let q = supabase.from('cgtasks').select('*').order('created_at', { ascending: false });
+      let q = supabase.from('cg_tasks').select('*').order('created_at', { ascending: false });
       if (locationId) q = q.eq('location_id', locationId);
       const { data, error } = await q;
       if (error) { console.warn('[useTasks]', error.message); return []; }
@@ -401,5 +401,145 @@ export function useChatMessages(channelId?: string) {
     },
     enabled: isSupabaseConfigured,
     refetchInterval: 5000,
+  });
+}
+
+// ─── SCHEDULES ──────────────────────────────────────────
+export function useSchedules(locationId?: string) {
+  return useQuery({
+    queryKey: ['cg_schedules', locationId],
+    queryFn: async () => {
+      let q = supabase.from('cg_schedules').select('*').order('week_of', { ascending: false });
+      if (locationId) q = q.eq('location_id', locationId);
+      const { data, error } = await q;
+      if (error) { console.warn('[useSchedules]', error.message); return []; }
+      return data as any[];
+    },
+    enabled: isSupabaseConfigured,
+  });
+}
+
+export function useShiftsForSchedule(scheduleId?: string) {
+  return useQuery({
+    queryKey: ['cg_shifts_schedule', scheduleId],
+    queryFn: async () => {
+      if (!scheduleId) return [];
+      const { data, error } = await supabase
+        .from('cg_shifts')
+        .select('*')
+        .eq('schedule_id', scheduleId)
+        .order('start_time', { ascending: true });
+      if (error) { console.warn('[useShiftsForSchedule]', error.message); return []; }
+      return data as any[];
+    },
+    enabled: isSupabaseConfigured && !!scheduleId,
+  });
+}
+
+export function useShiftsByLocation(locationId?: string, weekOf?: string) {
+  return useQuery({
+    queryKey: ['cg_shifts_location', locationId, weekOf],
+    queryFn: async () => {
+      if (!locationId) return [];
+      let q = supabase.from('cg_shifts').select('*').eq('location_id', locationId).order('start_time', { ascending: true });
+      if (weekOf) {
+        const start = new Date(weekOf);
+        const end = new Date(start);
+        end.setDate(end.getDate() + 7);
+        q = q.gte('start_time', start.toISOString()).lt('start_time', end.toISOString());
+      }
+      const { data, error } = await q;
+      if (error) { console.warn('[useShiftsByLocation]', error.message); return []; }
+      return data as any[];
+    },
+    enabled: isSupabaseConfigured && !!locationId,
+  });
+}
+
+// ─── REPORTS DAILY ──────────────────────────────────────
+export function useReportsDaily(filters: {
+  locationId?: string; brandId?: string;
+  startDate?: string; endDate?: string;
+} = {}) {
+  return useQuery({
+    queryKey: ['cg_reports_daily', filters],
+    queryFn: async () => {
+      let q = supabase.from('cg_reports_daily').select('*').order('report_date', { ascending: false });
+      if (filters.locationId) q = q.eq('location_id', filters.locationId);
+      if (filters.brandId) q = q.eq('brand_id', filters.brandId);
+      if (filters.startDate) q = q.gte('report_date', filters.startDate);
+      if (filters.endDate) q = q.lte('report_date', filters.endDate);
+      const { data, error } = await q;
+      if (error) { console.warn('[useReportsDaily]', error.message); return []; }
+      return data as any[];
+    },
+    enabled: isSupabaseConfigured,
+  });
+}
+
+// ─── TRAINING PROGRESS ──────────────────────────────────
+export function useTrainingProgress(userId?: string | null) {
+  return useQuery({
+    queryKey: ['cg_training_progress', userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase
+        .from('cg_training_progress')
+        .select('*, cg_training_modules(*)')
+        .eq('user_id', userId);
+      if (error) { console.warn('[useTrainingProgress]', error.message); return []; }
+      return data as any[];
+    },
+    enabled: isSupabaseConfigured && !!userId,
+  });
+}
+
+// ─── SOP ACKNOWLEDGEMENTS ───────────────────────────────
+export function useSopAcknowledgements(sopId?: string) {
+  return useQuery({
+    queryKey: ['cg_sop_acks', sopId],
+    queryFn: async () => {
+      if (!sopId) return [];
+      const { data, error } = await supabase
+        .from('cg_sop_acknowledgements')
+        .select('*')
+        .eq('sop_id', sopId);
+      if (error) return [];
+      return data as any[];
+    },
+    enabled: isSupabaseConfigured && !!sopId,
+  });
+}
+
+// ─── CHANNEL MEMBERS ────────────────────────────────────
+export function useChannelMembers(channelId?: string) {
+  return useQuery({
+    queryKey: ['cg_channel_members', channelId],
+    queryFn: async () => {
+      if (!channelId) return [];
+      const { data, error } = await supabase
+        .from('cg_channel_members')
+        .select('*')
+        .eq('channel_id', channelId);
+      if (error) return [];
+      return data as any[];
+    },
+    enabled: isSupabaseConfigured && !!channelId,
+  });
+}
+
+// ─── ALL PROFILES (for admin user management) ───────────
+export function useProfiles() {
+  return useQuery({
+    queryKey: ['profiles_all'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('full_name');
+      if (error) { console.warn('[useProfiles]', error.message); return []; }
+      return data as any[];
+    },
+    enabled: isSupabaseConfigured,
   });
 }
