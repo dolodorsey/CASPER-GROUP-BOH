@@ -10,6 +10,8 @@ export type Profile = {
   role: Role;
   location_id: string | null;
   brand_id: string | null;
+  full_name: string | null;
+  role_level: number | null;
 };
 
 export type LocationSummary = { id: string; name: string; address: string; };
@@ -51,7 +53,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
   const fetchProfile = async (uid: string) => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, role, location_id, brand_id")
+      .select("id, role, location_id, brand_id, full_name, role_level")
       .eq("id", uid)
       .single();
 
