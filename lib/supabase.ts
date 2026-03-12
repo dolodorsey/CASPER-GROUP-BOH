@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 const supabaseUrl = 'https://qhgmukwoennurwuvmbhy.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoZ211a3dvZW5udXJ3dXZtYmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5ODI1NDksImV4cCI6MjA4MjU1ODU0OX0.DhNcV9_h8_wdvKHfGyK9kdxKTlT6ZJ1t-JbCKBGD-Kw';
@@ -8,12 +8,26 @@ export const isSupabaseConfigured = true;
 
 let supabaseInstance: SupabaseClient | null = null;
 
+// Lazy-load AsyncStorage only when window is available (not during SSR/static export)
+const getStorage = () => {
+  if (typeof window !== 'undefined') {
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      return AsyncStorage;
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+};
+
 try {
+  const storage = getStorage();
   supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
-      storage: AsyncStorage,
+      ...(storage ? { storage } : {}),
       autoRefreshToken: true,
-      persistSession: true,
+      persistSession: typeof window !== 'undefined',
       detectSessionInUrl: false,
     },
   });
