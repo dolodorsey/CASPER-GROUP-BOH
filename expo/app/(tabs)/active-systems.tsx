@@ -1,125 +1,197 @@
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useState, useMemo } from 'react';
 import { COLORS } from '@/constants/colors';
+import { useBrands, useLocations, useAlerts, useKpis, useTickets } from '@/hooks/useSupabaseData';
 
-const SYSTEMS = [
-  { name: 'Pinky Promise', status: 'active', ops: 5, uptime: 99.9, icon: 'shield-checkmark', revenue: '$12.4K' },
-  { name: 'Umbrella Group', status: 'active', ops: 3, uptime: 98.7, icon: 'umbrella', revenue: '$8.2K' },
-  { name: 'Sole Exchange', status: 'active', ops: 7, uptime: 100, icon: 'swap-horizontal', revenue: '$15.1K' },
-  { name: 'Bodegea', status: 'active', ops: 4, uptime: 97.5, icon: 'storefront', revenue: '$6.8K' },
-];
-
-const ALERTS = [
-  { text: 'Inventory restock needed — kitchen supplies', level: 'warning', time: '12m ago' },
-  { text: 'New reservation block opened for Saturday', level: 'info', time: '1h ago' },
-  { text: 'Staff schedule conflict detected', level: 'error', time: '2h ago' },
-];
+const SEVERITY_COLOR: Record<string, string> = {
+  critical: '#EF4444',
+  error: '#EF4444',
+  warning: '#F59E0B',
+  info: '#3B82F6',
+  low: '#6B7280',
+};
 
 export default function ActiveSystemsScreen() {
-  const totalOps = SYSTEMS.reduce((a, s) => a + s.ops, 0);
-  const avgUptime = (SYSTEMS.reduce((a, s) => a + s.uptime, 0) / SYSTEMS.length).toFixed(1);
+  const router = useRouter();
+  const [refreshing, setRefreshing] = useState(false);
+  const { data: brands = [], isLoading: brandsLoading } = useBrands();
+  const { data: locations = [], isLoading: locsLoading } = useLocations();
+  const { data: alerts = [], refetch: refetchAlerts } = useAlerts();
+  const { data: kpis = [], refetch: refetchKpis } = useKpis();
+  const { data: tickets = [], refetch: refetchTickets } = useTickets();
+
+  const loading = brandsLoading || locsLoading;
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([refetchAlerts(), refetchKpis(), refetchTickets()]);
+    setRefreshing(false);
+  };
+
+  const activeAlerts = useMemo(
+    () => alerts.filter((a: any) => a.status === 'active'),
+    [alerts],
+  );
+
+  const activeTickets = useMemo(
+    () => tickets.filter((t: any) => ['new', 'in_progress', 'ready'].includes(t.status)),
+    [tickets],
+  );
+
+  const slaKpi = kpis.find((k: any) => k.name.toLowerCase().includes('sla'));
+  const revenueKpi = kpis.find((k: any) => k.name.toLowerCase().includes('revenue'));
+
+  if (loading) {
+    return (
+      <View style={s.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.moltenGold} />
+        <Text style={s.loadingText}>LOADING COMMAND CENTER...</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView style={s.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={s.container}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.moltenGold} />
+      }
+    >
       <View style={s.content}>
-        {/* Header */}
         <Text style={s.greeting}>Command Center</Text>
-        <Text style={s.subtitle}>All systems operational</Text>
+        <Text style={s.subtitle}>
+          {activeAlerts.length === 0 ? 'All systems operational' : `${activeAlerts.length} active alert${activeAlerts.length === 1 ? '' : 's'}`}
+        </Text>
 
-        {/* Stats Row */}
         <View style={s.statsRow}>
           <View style={s.statCard}>
-            <Text style={s.statNumber}>{SYSTEMS.length}</Text>
-            <Text style={s.statLabel}>SYSTEMS</Text>
+            <Text style={s.statNumber}>{brands.length}</Text>
+            <Text style={s.statLabel}>BRANDS</Text>
           </View>
           <View style={s.statCard}>
-            <Text style={s.statNumber}>{totalOps}</Text>
-            <Text style={s.statLabel}>ACTIVE OPS</Text>
+            <Text style={s.statNumber}>{locations.length}</Text>
+            <Text style={s.statLabel}>LOCATIONS</Text>
           </View>
           <View style={s.statCard}>
-            <Text style={[s.statNumber, { color: '#10B981' }]}>{avgUptime}%</Text>
-            <Text style={s.statLabel}>UPTIME</Text>
+            <Text style={[s.statNumber, { color: activeTickets.length > 0 ? COLORS.electricBlue : COLORS.emeraldGreen }]}>
+              {activeTickets.length}
+            </Text>
+            <Text style={s.statLabel}>LIVE TICKETS</Text>
           </View>
         </View>
 
-        {/* Alerts */}
-        <Text style={s.sectionTitle}>Alerts</Text>
-        {ALERTS.map((alert, i) => (
-          <View key={i} style={s.alertRow}>
-            <View style={[s.alertDot, {
-              backgroundColor: alert.level === 'error' ? '#EF4444' : alert.level === 'warning' ? '#F59E0B' : '#3B82F6'
-            }]} />
-            <View style={{ flex: 1 }}>
-              <Text style={s.alertText}>{alert.text}</Text>
-              <Text style={s.alertTime}>{alert.time}</Text>
-            </View>
+        {(slaKpi || revenueKpi) && (
+          <View style={s.statsRow}>
+            {revenueKpi && (
+              <View style={[s.statCard, { flex: 1.2 }]}>
+                <Text style={[s.statNumber, { fontSize: 22, color: COLORS.moltenGold }]}>
+                  ${Number(revenueKpi.value).toLocaleString()}
+                </Text>
+                <Text style={s.statLabel}>REVENUE L30D</Text>
+              </View>
+            )}
+            {slaKpi && (
+              <View style={[s.statCard, { flex: 1 }]}>
+                <Text style={[s.statNumber, { color: Number(slaKpi.value) >= 95 ? COLORS.emeraldGreen : COLORS.warning }]}>
+                  {slaKpi.value}%
+                </Text>
+                <Text style={s.statLabel}>SLA COMPLIANCE</Text>
+              </View>
+            )}
           </View>
-        ))}
+        )}
 
-        {/* Systems */}
-        <Text style={[s.sectionTitle, { marginTop: 28 }]}>Active Systems</Text>
-        {SYSTEMS.map((sys) => (
-          <TouchableOpacity key={sys.name} activeOpacity={0.85} style={s.systemCard}>
-            <View style={s.systemTop}>
-              <View style={s.systemIconWrap}>
-                <Ionicons name={sys.icon as any} size={22} color={COLORS.moltenGold} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={s.systemName}>{sys.name}</Text>
-                <View style={s.statusRow}>
-                  <View style={s.statusDot} />
-                  <Text style={s.statusText}>Active</Text>
-                </View>
-              </View>
-              <Text style={s.systemRevenue}>{sys.revenue}</Text>
-            </View>
-            <View style={s.systemMeta}>
-              <View style={s.metaItem}>
-                <Text style={s.metaValue}>{sys.ops}</Text>
-                <Text style={s.metaLabel}>ops</Text>
-              </View>
-              <View style={s.metaDivider} />
-              <View style={s.metaItem}>
-                <Text style={[s.metaValue, { color: sys.uptime >= 99 ? '#10B981' : '#F59E0B' }]}>{sys.uptime}%</Text>
-                <Text style={s.metaLabel}>uptime</Text>
-              </View>
-              <View style={{ flex: 1 }} />
-              <Text style={s.viewBtn}>Details →</Text>
-            </View>
+        <View style={s.sectionHeader}>
+          <Text style={s.sectionTitle}>Active Locations</Text>
+          <TouchableOpacity onPress={() => router.push('/admin')}>
+            <Text style={s.sectionAction}>Manage →</Text>
           </TouchableOpacity>
-        ))}
+        </View>
+        {locations.length === 0 ? (
+          <Text style={s.emptyText}>No locations configured yet.</Text>
+        ) : (
+          locations.map((loc: any) => {
+            const locTickets = activeTickets.filter((t: any) => t.location_id === loc.id).length;
+            return (
+              <TouchableOpacity
+                key={loc.id}
+                style={s.locationCard}
+                onPress={() => router.push('/admin')}
+              >
+                <View style={s.locationIcon}>
+                  <Ionicons name="storefront" size={20} color={COLORS.moltenGold} />
+                </View>
+                <View style={s.locationMeta}>
+                  <Text style={s.locationName}>{loc.name}</Text>
+                  <Text style={s.locationAddress}>
+                    {loc.city ? `${loc.city}, ${loc.state ?? 'GA'}` : loc.address ?? '—'}
+                  </Text>
+                </View>
+                <View style={s.locationRight}>
+                  <Text style={s.locationBadge}>{locTickets}</Text>
+                  <Text style={s.locationBadgeLabel}>tickets</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })
+        )}
+
+        <Text style={[s.sectionTitle, { marginTop: 24 }]}>Alerts</Text>
+        {activeAlerts.length === 0 ? (
+          <View style={s.emptyCard}>
+            <Ionicons name="checkmark-circle" size={22} color={COLORS.emeraldGreen} />
+            <Text style={s.emptyCardText}>No active alerts. All systems nominal.</Text>
+          </View>
+        ) : (
+          activeAlerts.map((alert: any) => (
+            <View key={alert.id} style={s.alertRow}>
+              <View style={[s.alertDot, { backgroundColor: SEVERITY_COLOR[alert.severity] ?? COLORS.lightGray }]} />
+              <View style={{ flex: 1 }}>
+                <Text style={s.alertText}>{alert.title}</Text>
+                {alert.message ? <Text style={s.alertSubtext}>{alert.message}</Text> : null}
+              </View>
+              <Text style={s.alertTime}>
+                {new Date(alert.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+              </Text>
+            </View>
+          ))
+        )}
       </View>
-      <View style={{ height: 100 }} />
     </ScrollView>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
-  content: { padding: 24, paddingTop: 60 },
-  greeting: { fontSize: 32, fontWeight: '800', color: COLORS.moltenGold, letterSpacing: -0.5 },
-  subtitle: { fontSize: 14, color: '#555', marginTop: 4, marginBottom: 24 },
-  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 28 },
-  statCard: { flex: 1, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
-  statNumber: { fontSize: 24, fontWeight: '800', color: '#fff' },
-  statLabel: { fontSize: 9, color: '#555', fontWeight: '700', letterSpacing: 1.5, marginTop: 4 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#fff', marginBottom: 12 },
-  alertRow: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)' },
-  alertDot: { width: 8, height: 8, borderRadius: 4, marginRight: 12, marginTop: 5 },
-  alertText: { color: '#ddd', fontSize: 13, fontWeight: '500', lineHeight: 18 },
-  alertTime: { color: '#444', fontSize: 11, marginTop: 3 },
-  systemCard: { backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 16, padding: 18, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(255,215,0,0.08)' },
-  systemTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
-  systemIconWrap: { width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,215,0,0.08)', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  systemName: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  statusRow: { flexDirection: 'row', alignItems: 'center', marginTop: 3 },
-  statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#10B981', marginRight: 6 },
-  statusText: { color: '#10B981', fontSize: 11, fontWeight: '600' },
-  systemRevenue: { color: COLORS.moltenGold, fontSize: 16, fontWeight: '700' },
-  systemMeta: { flexDirection: 'row', alignItems: 'center', paddingTop: 14, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.04)' },
-  metaItem: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
-  metaValue: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  metaLabel: { color: '#555', fontSize: 11 },
-  metaDivider: { width: 1, height: 16, backgroundColor: 'rgba(255,255,255,0.08)', marginHorizontal: 14 },
-  viewBtn: { color: COLORS.moltenGold, fontSize: 13, fontWeight: '600' },
+  container: { flex: 1, backgroundColor: COLORS.deepBlack },
+  loadingContainer: { flex: 1, backgroundColor: COLORS.deepBlack, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: COLORS.moltenGold, marginTop: 12, letterSpacing: 2, fontSize: 12 },
+  content: { padding: 20, paddingTop: 60, paddingBottom: 100 },
+  greeting: { color: COLORS.pureWhite, fontSize: 28, fontWeight: '700', marginBottom: 4 },
+  subtitle: { color: COLORS.lightGray, fontSize: 14, marginBottom: 24 },
+  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
+  statCard: { flex: 1, backgroundColor: COLORS.darkCharcoal, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: COLORS.borderGray },
+  statNumber: { color: COLORS.moltenGold, fontSize: 28, fontWeight: '700' },
+  statLabel: { color: COLORS.lightGray, fontSize: 10, letterSpacing: 1.5, marginTop: 4 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, marginBottom: 12 },
+  sectionTitle: { color: COLORS.pureWhite, fontSize: 18, fontWeight: '600' },
+  sectionAction: { color: COLORS.moltenGold, fontSize: 13 },
+  locationCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.darkCharcoal, borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: COLORS.borderGray },
+  locationIcon: { width: 40, height: 40, borderRadius: 10, backgroundColor: 'rgba(255,215,0,0.1)', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  locationMeta: { flex: 1 },
+  locationName: { color: COLORS.pureWhite, fontSize: 15, fontWeight: '600' },
+  locationAddress: { color: COLORS.lightGray, fontSize: 12, marginTop: 2 },
+  locationRight: { alignItems: 'flex-end' },
+  locationBadge: { color: COLORS.electricBlue, fontSize: 18, fontWeight: '700' },
+  locationBadgeLabel: { color: COLORS.lightGray, fontSize: 10, letterSpacing: 1 },
+  emptyText: { color: COLORS.lightGray, fontSize: 13, textAlign: 'center', paddingVertical: 20 },
+  emptyCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: COLORS.darkCharcoal, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: COLORS.borderGray },
+  emptyCardText: { color: COLORS.lightGray, fontSize: 13, flex: 1 },
+  alertRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: COLORS.darkCharcoal, borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: COLORS.borderGray },
+  alertDot: { width: 10, height: 10, borderRadius: 5 },
+  alertText: { color: COLORS.pureWhite, fontSize: 14, fontWeight: '500' },
+  alertSubtext: { color: COLORS.lightGray, fontSize: 12, marginTop: 2 },
+  alertTime: { color: COLORS.lightGray, fontSize: 11 },
 });
