@@ -54,7 +54,7 @@ export function GlobalMap() {
             key={location.id}
             style={[
               styles.pin,
-              { left: location.x, top: location.y },
+              { left: location.x as `${number}%`, top: location.y as `${number}%` },
             ]}
           >
             <Animated.View

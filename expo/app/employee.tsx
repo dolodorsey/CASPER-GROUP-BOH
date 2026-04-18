@@ -53,7 +53,7 @@ export default function EmployeePortal() {
     const submitQuiz = async()=>{let c=0;qz.forEach((q:any,i:number)=>{if(quizAnswers[i]===q.correct_answer_index)c++;});const sc=Math.round((c/qz.length)*100);if(userId){await supabase.from('cg_training_progress').upsert({module_id:selectedTraining.id,user_id:userId,status:'completed',quiz_score:sc,quiz_answers:quizAnswers,current_block:bl.length,completed_at:new Date().toISOString()},{onConflict:'module_id,user_id'});}};
     return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><SafeAreaView style={st.safe}>
       <View style={st.backHeader}><TouchableOpacity onPress={()=>{setActiveTab('training');setSelectedTraining(null);}} style={st.backBtn}><ArrowLeft color={COLORS.pureWhite} size={22}/></TouchableOpacity><Text style={st.backTitle} numberOfLines={1}>{selectedTraining.title}</Text></View>
-      <View style={st.progressBg}><View style={[st.progressFill,{width:prog+'%'}]}/></View>
+      <View style={st.progressBg}><View style={[st.progressFill,{width:`${prog}%` as `${number}%`}]}/></View>
       <Text style={[st.sub,{textAlign:'center',marginVertical:8}]}>{lessonBlock+1}/{tot}</Text>
       <ScrollView contentContainerStyle={{padding:20,flexGrow:1}}>
         {!isQ&&cb&&<View>{cb.type==='text'&&<Text style={st.lessonText}>{cb.content}</Text>}{cb.type==='checklist'&&cb.content.split('|').map((item:string,idx:number)=>(<View key={idx} style={st.row}><CheckCircle color={COLORS.emeraldGreen} size={16}/><Text style={[st.rowText,{marginLeft:10}]}>{item.trim()}</Text></View>))}</View>}

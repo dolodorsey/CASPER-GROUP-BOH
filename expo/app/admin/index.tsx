@@ -192,7 +192,7 @@ export default function AdminDashboard() {
     const prog = tot>0?((lessonBlock+1)/tot)*100:0; const cb = !isQ?bl[lessonBlock]:null;
     const submitQuiz = async()=>{let c=0;qz.forEach((q:any,i:number)=>{if(quizAnswers[i]===q.correct_answer_index)c++;});const sc=Math.round((c/qz.length)*100);const ps=sc>=(selectedTraining.passing_score||80);if(userId){await supabase.from('cg_training_progress').upsert({module_id:selectedTraining.id,user_id:userId,status:'completed',quiz_score:sc,quiz_answers:quizAnswers,current_block:bl.length,completed_at:new Date().toISOString()},{onConflict:'module_id,user_id'});}RNAlert.alert(ps?'Passed!':'Not Passed','Score: '+sc+'%');};
     return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title={selectedTraining.title} onBack={()=>setScreen('training')}/>
-      <View style={st.progressBarBg}><View style={[st.progressBarFill,{width:prog+'%'}]}/></View>
+      <View style={st.progressBarBg}><View style={[st.progressBarFill,{width:`${prog}%` as `${number}%`}]}/></View>
       <Text style={[st.rowSub,{textAlign:'center',marginVertical:8}]}>{lessonBlock+1} / {tot}</Text>
       <ScrollView contentContainerStyle={{padding:16,flexGrow:1}}>
         {!isQ&&cb&&<View>{cb.type==='text'&&<Text style={st.lessonText}>{cb.content}</Text>}{cb.type==='checklist'&&<View><Text style={[st.secTitle,{marginBottom:8}]}>CHECKLIST</Text>{cb.content.split('|').map((item:string,idx:number)=>(<View key={idx} style={st.row}><CheckCircle color={COLORS.emeraldGreen} size={16}/><Text style={[st.rowText,{marginLeft:10}]}>{item.trim()}</Text></View>))}</View>}</View>}
