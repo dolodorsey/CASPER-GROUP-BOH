@@ -1,8 +1,14 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 
-const supabaseUrl = 'https://qhgmukwoennurwuvmbhy.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoZ211a3dvZW5udXJ3dXZtYmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5ODI1NDksImV4cCI6MjA4MjU1ODU0OX0.DhNcV9_h8_wdvKHfGyK9kdxKTlT6ZJ1t-JbCKBGD-Kw';
+// Read from env first (Vercel / Expo). Falls back to hardcoded values so local
+// dev keeps working even without a .env file.
+const supabaseUrl =
+  process.env.EXPO_PUBLIC_SUPABASE_URL ||
+  'https://qhgmukwoennurwuvmbhy.supabase.co';
+const supabaseAnonKey =
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoZ211a3dvZW5udXJ3dXZtYmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5ODI1NDksImV4cCI6MjA4MjU1ODU0OX0.DhNcV9_h8_wdvKHfGyK9kdxKTlT6ZJ1t-JbCKBGD-Kw';
 
 export const isSupabaseConfigured = true;
 
