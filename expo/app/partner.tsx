@@ -27,6 +27,7 @@ import {
 } from "lucide-react-native";
 import { COLORS } from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
+import { useFinancialKpis30d, useFinancialsMonthly, useLocations } from "@/hooks/useSupabaseData";
 
 interface TabButtonProps {
   title: string;
@@ -68,6 +69,13 @@ export default function PartnerPortal() {
   const { profile, isBooting } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // Scope financials to the partner's assigned location (or first location if profile has none)
+  const { data: allLocations = [] } = useLocations();
+  const partnerLocationId: string | null = (profile as any)?.location_id ?? null;
+  const scopedLocationId = partnerLocationId || allLocations[0]?.id || null;
+  const scopedLocationName = allLocations.find(l => l.id === scopedLocationId)?.name || 'My Location';
+  const { data: scopedKpis } = useFinancialKpis30d(scopedLocationId ? { locationId: scopedLocationId } : undefined);
+  const { data: scopedMonthly = [] } = useFinancialsMonthly(scopedLocationId ? { locationId: scopedLocationId, monthsBack: 6 } : undefined);
 
   if (isBooting) {
     return (
@@ -400,6 +408,77 @@ export default function PartnerPortal() {
           </View>
         );
 
+      case 'financials':
+        return (
+          <ScrollView
+            style={styles.tabContentContainer}
+            refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={COLORS.emeraldGreen} />}
+          >
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{scopedLocationName.toUpperCase()} · LAST 30 DAYS</Text>
+              {!scopedKpis ? (
+                <Text style={{ color: COLORS.lightGray, fontStyle: 'italic', paddingVertical: 16 }}>No financial data for your location yet.</Text>
+              ) : (
+                <View style={styles.revenueGrid}>
+                  <View style={styles.revenueCard}>
+                    <DollarSign color={COLORS.moltenGold} size={24} />
+                    <Text style={styles.revenueValue}>${Number(scopedKpis.revenue_30d || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</Text>
+                    <Text style={styles.revenueLabel}>Revenue</Text>
+                  </View>
+                  <View style={styles.revenueCard}>
+                    <PieChart color={COLORS.alertRed} size={24} />
+                    <Text style={styles.revenueValue}>{Number(scopedKpis.food_cost_pct || 0).toFixed(1)}%</Text>
+                    <Text style={styles.revenueLabel}>Food Cost</Text>
+                  </View>
+                  <View style={styles.revenueCard}>
+                    <Users color={COLORS.electricBlue} size={24} />
+                    <Text style={styles.revenueValue}>{Number(scopedKpis.labor_cost_pct || 0).toFixed(1)}%</Text>
+                    <Text style={styles.revenueLabel}>Labor Cost</Text>
+                  </View>
+                  <View style={styles.revenueCard}>
+                    <TrendingUp color={COLORS.emeraldGreen} size={24} />
+                    <Text style={styles.revenueValue}>{Number(scopedKpis.net_margin_pct || 0).toFixed(1)}%</Text>
+                    <Text style={styles.revenueLabel}>Net Margin</Text>
+                  </View>
+                  <View style={styles.revenueCard}>
+                    <BarChart3 color={COLORS.platinum} size={24} />
+                    <Text style={styles.revenueValue}>{Number(scopedKpis.orders_30d || 0).toLocaleString()}</Text>
+                    <Text style={styles.revenueLabel}>Orders</Text>
+                  </View>
+                  <View style={styles.revenueCard}>
+                    <DollarSign color={COLORS.moltenGold} size={24} />
+                    <Text style={styles.revenueValue}>${Number(scopedKpis.avg_ticket_30d || 0).toFixed(2)}</Text>
+                    <Text style={styles.revenueLabel}>Avg Ticket</Text>
+                  </View>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>RECENT MONTHLY P&L</Text>
+              {scopedMonthly.length === 0 ? (
+                <Text style={{ color: COLORS.lightGray, fontStyle: 'italic', paddingVertical: 16 }}>No monthly rollups yet.</Text>
+              ) : (
+                scopedMonthly.map(m => {
+                  const margin = m.revenue > 0 ? (Number(m.ebitda) / Number(m.revenue)) * 100 : 0;
+                  return (
+                    <View key={m.id} style={[styles.revenueCard, { width: '100%', marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                      <View>
+                        <Text style={[styles.revenueValue, { fontSize: 14 }]}>{new Date(m.month).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</Text>
+                        <Text style={styles.revenueLabel}>{Number(m.orders_count || 0).toLocaleString()} orders</Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={[styles.revenueValue, { fontSize: 16, color: COLORS.moltenGold }]}>${Number(m.revenue).toLocaleString(undefined, { maximumFractionDigits: 0 })}</Text>
+                        <Text style={[styles.revenueLabel, { color: m.ebitda >= 0 ? COLORS.emeraldGreen : COLORS.alertRed }]}>EBITDA ${Number(m.ebitda).toLocaleString(undefined, { maximumFractionDigits: 0 })} · {margin.toFixed(1)}%</Text>
+                      </View>
+                    </View>
+                  );
+                })
+              )}
+            </View>
+          </ScrollView>
+        );
+
       default:
         return null;
     }
@@ -445,6 +524,12 @@ export default function PartnerPortal() {
             icon={MapPin}
             isActive={activeTab === 'locations'}
             onPress={() => setActiveTab('locations')}
+          />
+          <TabButton
+            title="My Financials"
+            icon={BarChart3}
+            isActive={activeTab === 'financials'}
+            onPress={() => setActiveTab('financials')}
           />
           <TabButton
             title="Payouts"

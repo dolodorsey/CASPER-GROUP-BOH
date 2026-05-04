@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, T
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Shield, AlertTriangle, BarChart3, Settings, MapPin, Activity, FileText, ClipboardList, Users, ChevronRight, Clock, CheckCircle, Circle, Send, MessageSquare, BookOpen, ArrowLeft, X as XIcon, Calendar, Plus, Globe, Building, Download, Award } from 'lucide-react-native';
+import { Shield, AlertTriangle, BarChart3, Settings, MapPin, Activity, FileText, ClipboardList, Users, ChevronRight, Clock, CheckCircle, Circle, Send, MessageSquare, BookOpen, ArrowLeft, X as XIcon, Calendar, Plus, Globe, Building, Download, Award, DollarSign } from 'lucide-react-native';
 import { COLORS } from '@/constants/colors';
 import { useBrands, useLocations, useKpis, useAlerts, useSops, useTasks, useTrainingModules, useChannels, useChatMessages, useReportsDaily, useShiftsByLocation, useProfiles } from '@/hooks/useSupabaseData';
 import { useAuth } from '@/providers/AuthProvider';
@@ -331,7 +331,8 @@ export default function AdminDashboard() {
         <View style={{paddingHorizontal:16,marginTop:20}}><Text style={st.secTitle}>OPERATIONS</Text>
           <View style={st.grid}>{[
             {title:'Tasks',sub:pendingTasks.length+' pending',icon:ClipboardList,color:COLORS.electricBlue,go:'tasks' as Screen},
-            {title:'SOPs & Docs',sub:(sops?.length??0)+' documents',icon:FileText,color:COLORS.emeraldGreen,go:'sops' as Screen},
+            {title:'SOPs & Docs',sub:(sops?.length??0)+' documents',icon:FileText,color:COLORS.emeraldGreen,go:'sops_v2' as any},
+            {title:'Financials',sub:'P&L · KPIs · Reports',icon:DollarSign,color:COLORS.moltenGold,go:'financials' as any},
             {title:'Training',sub:(training?.length??0)+' modules',icon:BookOpen,color:COLORS.moltenGold,go:'training' as Screen},
             {title:'Team Chat',sub:(channels?.length??0)+' channels',icon:MessageSquare,color:COLORS.platinum,go:'chat' as Screen},
             {title:'Schedule',sub:'Manage shifts',icon:Calendar,color:COLORS.electricBlue,go:'schedule' as Screen},
@@ -339,7 +340,12 @@ export default function AdminDashboard() {
             {title:'Alerts',sub:activeAlerts.length+' active',icon:AlertTriangle,color:COLORS.alertRed,go:'alerts' as Screen},
             {title:'Command',sub:'Live dashboard',icon:Activity,color:COLORS.electricBlue,go:'command' as any},
             {title:'Settings',sub:'Access & roles',icon:Settings,color:COLORS.lightGray,go:'settings' as Screen},
-          ].map((a,i)=>(<TouchableOpacity key={i} style={st.gridCard} onPress={()=>a.go==='command'?router.push('/command'):setScreen(a.go)}><a.icon color={a.color} size={22}/><Text style={st.gridTitle}>{a.title}</Text><Text style={st.gridSub}>{a.sub}</Text></TouchableOpacity>))}</View>
+          ].map((a,i)=>(<TouchableOpacity key={i} style={st.gridCard} onPress={()=>{
+            if(a.go==='command') return router.push('/command');
+            if(a.go==='sops_v2') return router.push('/sops' as any);
+            if(a.go==='financials') return router.push('/admin/financials' as any);
+            setScreen(a.go as any);
+          }}><a.icon color={a.color} size={22}/><Text style={st.gridTitle}>{a.title}</Text><Text style={st.gridSub}>{a.sub}</Text></TouchableOpacity>))}</View>
         </View>
         <View style={{height:40}}/>
       </ScrollView></SafeAreaView>

@@ -543,3 +543,141 @@ export function useProfiles() {
     enabled: isSupabaseConfigured,
   });
 }
+
+// ─── FINANCIALS (Admin only — Partner sees scoped to their location) ──
+export interface CgFinancialKpi {
+  brand_id: string | null;
+  location_id: string | null;
+  days_with_data: number;
+  revenue_30d: number | null;
+  food_cost_30d: number | null;
+  labor_cost_30d: number | null;
+  food_cost_pct: number | null;
+  labor_cost_pct: number | null;
+  net_margin_pct: number | null;
+  gross_margin_pct: number | null;
+  orders_30d: number | null;
+  avg_ticket_30d: number | null;
+  customer_rating_30d: number | null;
+  sla_pct_30d: number | null;
+  labor_hours_30d: number | null;
+  revenue_per_labor_hour: number | null;
+}
+
+/** 30-day rolling KPIs. Pass scope to filter; omit for enterprise total. */
+export function useFinancialKpis30d(scope?: { brandId?: string; locationId?: string }) {
+  return useQuery({
+    queryKey: ['v_cg_financial_kpis_30d', scope],
+    queryFn: async () => {
+      // If filtered, query the per-row view; otherwise the totals view.
+      if (scope?.brandId || scope?.locationId) {
+        let q = supabase.from('v_cg_financial_kpis_30d').select('*');
+        if (scope.brandId) q = q.eq('brand_id', scope.brandId);
+        if (scope.locationId) q = q.eq('location_id', scope.locationId);
+        const { data, error } = await q;
+        if (error) { console.warn('[useFinancialKpis30d]', error.message); return null; }
+        // Aggregate filtered rows in-memory
+        if (!data || data.length === 0) return null;
+        const sumRev = data.reduce((s, r) => s + Number(r.revenue_30d || 0), 0);
+        const sumFood = data.reduce((s, r) => s + Number(r.food_cost_30d || 0), 0);
+        const sumLab = data.reduce((s, r) => s + Number(r.labor_cost_30d || 0), 0);
+        const sumOrders = data.reduce((s, r) => s + Number(r.orders_30d || 0), 0);
+        const sumLabHrs = data.reduce((s, r) => s + Number(r.labor_hours_30d || 0), 0);
+        return {
+          brand_id: scope.brandId ?? null, location_id: scope.locationId ?? null,
+          days_with_data: Math.max(...data.map(r => Number(r.days_with_data || 0))),
+          revenue_30d: sumRev, food_cost_30d: sumFood, labor_cost_30d: sumLab,
+          food_cost_pct: sumRev > 0 ? Number(((sumFood / sumRev) * 100).toFixed(2)) : 0,
+          labor_cost_pct: sumRev > 0 ? Number(((sumLab / sumRev) * 100).toFixed(2)) : 0,
+          net_margin_pct: sumRev > 0 ? Number((((sumRev - sumFood - sumLab) / sumRev) * 100).toFixed(2)) : 0,
+          gross_margin_pct: sumRev > 0 ? Number((((sumRev - sumFood) / sumRev) * 100).toFixed(2)) : 0,
+          orders_30d: sumOrders,
+          avg_ticket_30d: sumOrders > 0 ? Number((sumRev / sumOrders).toFixed(2)) : 0,
+          customer_rating_30d: data.reduce((s, r) => s + Number(r.customer_rating_30d || 0), 0) / data.length,
+          sla_pct_30d: data.reduce((s, r) => s + Number(r.sla_pct_30d || 0), 0) / data.length,
+          labor_hours_30d: sumLabHrs,
+          revenue_per_labor_hour: sumLabHrs > 0 ? Number((sumRev / sumLabHrs).toFixed(2)) : 0,
+        } as CgFinancialKpi;
+      }
+      const { data, error } = await supabase.from('v_cg_financial_kpis_30d_total').select('*').single();
+      if (error) { console.warn('[useFinancialKpis30d total]', error.message); return null; }
+      return data as CgFinancialKpi;
+    },
+    enabled: isSupabaseConfigured,
+    staleTime: 60_000,
+  });
+}
+
+export interface CgFinancialMonthly {
+  id: string; month: string; brand_id: string | null; location_id: string | null;
+  revenue: number; cogs: number; food_cost: number; labor_cost: number;
+  rent: number; utilities: number; marketing: number; delivery_fees: number; other_expenses: number;
+  gross_profit: number; ebitda: number;
+  cash_on_hand: number; ar: number; ap: number;
+  orders_count: number; avg_ticket: number; customer_rating: number | null; sla_pct: number | null;
+}
+
+export function useFinancialsMonthly(scope?: { brandId?: string; locationId?: string; monthsBack?: number }) {
+  return useQuery({
+    queryKey: ['cg_financials_monthly', scope],
+    queryFn: async () => {
+      let q = supabase.from('cg_financials_monthly').select('*').order('month', { ascending: false });
+      if (scope?.brandId) q = q.eq('brand_id', scope.brandId);
+      if (scope?.locationId) q = q.eq('location_id', scope.locationId);
+      if (scope?.monthsBack) q = q.limit(scope.monthsBack);
+      const { data, error } = await q;
+      if (error) { console.warn('[useFinancialsMonthly]', error.message); return []; }
+      return (data ?? []) as CgFinancialMonthly[];
+    },
+    enabled: isSupabaseConfigured,
+    staleTime: 5 * 60_000,
+  });
+}
+
+// ─── SOPs grouped by section, for an entity (brand) ─────
+export interface CgSop {
+  id: string; brand_id: string | null; location_id: string | null;
+  title: string; category: string | null; section: string | null;
+  content: string | null; file_url: string | null; file_type: string | null;
+  version: string; status: string; requires_ack: boolean;
+  effective_date: string | null; created_at: string; updated_at: string;
+}
+
+export function useSopsByBrand(brandId?: string) {
+  return useQuery({
+    queryKey: ['cg_sops_by_brand', brandId],
+    queryFn: async () => {
+      if (!brandId) return [];
+      const { data, error } = await supabase
+        .from('cg_sops')
+        .select('*')
+        .eq('brand_id', brandId)
+        .order('section')
+        .order('title');
+      if (error) { console.warn('[useSopsByBrand]', error.message); return []; }
+      return (data ?? []) as CgSop[];
+    },
+    enabled: isSupabaseConfigured && !!brandId,
+    staleTime: 60_000,
+  });
+}
+
+export interface CgSopCount {
+  brand_id: string; brand_name: string; brand_slug: string;
+  section: string; sop_count: number; last_updated: string | null;
+}
+
+export function useSopCountsByBrand() {
+  return useQuery({
+    queryKey: ['v_cg_sop_counts_by_brand_section'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('v_cg_sop_counts_by_brand_section')
+        .select('*');
+      if (error) { console.warn('[useSopCountsByBrand]', error.message); return []; }
+      return (data ?? []) as CgSopCount[];
+    },
+    enabled: isSupabaseConfigured,
+    staleTime: 60_000,
+  });
+}

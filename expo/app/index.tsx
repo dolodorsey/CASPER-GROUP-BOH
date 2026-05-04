@@ -13,7 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { 
   Shield, Users, TrendingUp, Globe, Activity,
-  DollarSign, MapPin, AlertCircle
+  DollarSign, MapPin, AlertCircle, BookOpen
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { BRANDS } from "../constants/brands";
@@ -143,6 +143,7 @@ export default function LandingScreen() {
                 <PortalButton title="Employee Hub" subtitle="Operations & Training" icon={Users} colors={[COLORS.electricBlue, COLORS.deepBlue]} onPress={() => handlePortalPress('employee')} />
                 <PortalButton title="Partner Intelligence" subtitle="Revenue & Analytics" icon={TrendingUp} colors={[COLORS.emeraldGreen, COLORS.deepGreen]} onPress={() => handlePortalPress('partner')} />
                 <PortalButton title="Command Dashboard" subtitle="Live Operations Center" icon={Activity} colors={[COLORS.electricBlue, COLORS.deepBlue]} onPress={() => handlePortalPress('command')} />
+                <PortalButton title="SOPs Library" subtitle="Procedures by Brand" icon={BookOpen} colors={[COLORS.platinum, COLORS.lightGray]} onPress={() => handlePortalPress('sops')} />
               </View>
             </View>
 
