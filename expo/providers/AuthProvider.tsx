@@ -65,8 +65,8 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
   };
 
   const refreshProfile = useCallback(async () => {
-    const { data } = await supabase.auth.getSession();
-    const uid = data.session?.user.id ?? null;
+    const { data, error } = await supabase.auth.getUser();
+    const uid = error ? null : data.user?.id ?? null;
     setUserId(uid);
 
     if (!uid) {
@@ -89,8 +89,8 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       }
 
       try {
-        const { data } = await supabase.auth.getSession();
-        const uid = data.session?.user.id ?? null;
+        const { data, error } = await supabase.auth.getUser();
+        const uid = error ? null : data.user?.id ?? null;
 
         if (cancelled) return;
         setUserId(uid);
@@ -116,9 +116,10 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
 
       if (cancelled || !isSupabaseConfigured) return;
 
-      const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const { data: sub } = supabase.auth.onAuthStateChange(async () => {
         if (cancelled) return;
-        const uid = session?.user.id ?? null;
+        const { data, error } = await supabase.auth.getUser();
+        const uid = error ? null : data.user?.id ?? null;
         setUserId(uid);
 
         if (uid) {
