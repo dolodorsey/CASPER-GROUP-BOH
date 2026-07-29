@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -20,14 +20,13 @@ import {
   Users,
   MapPin,
   AlertCircle,
-  CheckCircle,
   Activity,
   BarChart3,
   ShieldAlert
 } from "lucide-react-native";
 import { COLORS } from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
-import { useFinancialKpis30d, useFinancialsMonthly, useLocations } from "@/hooks/useSupabaseData";
+import { useFinancialKpis30d, useFinancialsMonthly } from "@/hooks/useSupabaseData";
 
 interface TabButtonProps {
   title: string;
@@ -66,16 +65,35 @@ function TabButton({ title, icon: Icon, isActive, onPress, badge }: TabButtonPro
 
 export default function PartnerPortal() {
   const router = useRouter();
-  const { profile, isBooting } = useAuth();
+  const { profile, isBooting, allowedLocations } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  // Scope financials to the partner's assigned location (or first location if profile has none)
-  const { data: allLocations = [] } = useLocations();
+  // Never substitute an unrelated location. The portal only uses the
+  // locations assigned to this verified partner profile.
   const partnerLocationId: string | null = (profile as any)?.location_id ?? null;
-  const scopedLocationId = partnerLocationId || allLocations[0]?.id || null;
-  const scopedLocationName = allLocations.find(l => l.id === scopedLocationId)?.name || 'My Location';
+  const scopedLocationId = partnerLocationId || allowedLocations[0]?.id || null;
+  const scopedLocationName = allowedLocations.find(l => l.id === scopedLocationId)?.name || 'Assigned location';
   const { data: scopedKpis } = useFinancialKpis30d(scopedLocationId ? { locationId: scopedLocationId } : undefined);
   const { data: scopedMonthly = [] } = useFinancialsMonthly(scopedLocationId ? { locationId: scopedLocationId, monthsBack: 6 } : undefined);
+  const currentMonth = scopedMonthly[0];
+  const previousMonth = scopedMonthly[1];
+  const monthChange = currentMonth && previousMonth && Number(previousMonth.revenue) !== 0
+    ? ((Number(currentMonth.revenue) - Number(previousMonth.revenue)) / Number(previousMonth.revenue)) * 100
+    : null;
+  const decisionBrief = useMemo(() => {
+    if (!scopedKpis) return [];
+    const notes: Array<{ title: string; body: string; tone: string }> = [];
+    const food = Number(scopedKpis.food_cost_pct || 0);
+    const labor = Number(scopedKpis.labor_cost_pct || 0);
+    const sla = Number(scopedKpis.sla_pct_30d || 0);
+    const rating = Number(scopedKpis.customer_rating_30d || 0);
+    if (food >= 30) notes.push({ title: 'Food-cost review', body: `Food cost is ${food.toFixed(1)}% for the current 30-day window. Review purchasing, waste, and menu mix before setting a target.`, tone: COLORS.moltenGold });
+    if (labor >= 30) notes.push({ title: 'Labor productivity review', body: `Labor cost is ${labor.toFixed(1)}%. Compare schedules with order volume and revenue per labor hour.`, tone: COLORS.electricBlue });
+    if (sla > 0 && sla < 95) notes.push({ title: 'Service-time review', body: `SLA performance is ${sla.toFixed(1)}%. Trace the longest ticket windows before changing staffing or production flow.`, tone: COLORS.alertRed });
+    if (rating > 0 && rating < 4.5) notes.push({ title: 'Guest-experience review', body: `Customer rating is ${rating.toFixed(2)}. Pair review themes with daypart and order data before selecting a corrective action.`, tone: COLORS.alertRed });
+    if (notes.length === 0) notes.push({ title: 'Hold the operating standard', body: 'No threshold exception is visible in the current reporting window. Continue monitoring costs, service time, and guest feedback.', tone: COLORS.emeraldGreen });
+    return notes;
+  }, [scopedKpis]);
 
   if (isBooting) {
     return (
@@ -140,97 +158,65 @@ export default function PartnerPortal() {
               />
             }
           >
-            {/* Revenue Overview */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>REVENUE OVERVIEW</Text>
+              <Text style={styles.sectionTitle}>{scopedLocationName.toUpperCase()} · VERIFIED 30-DAY VIEW</Text>
+              {!scopedKpis ? (
+                <Text style={styles.emptyText}>No verified financial rollup is available for this assigned location yet.</Text>
+              ) : (
               <View style={styles.revenueGrid}>
                 <View style={styles.revenueCard}>
                   <DollarSign color={COLORS.moltenGold} size={24} />
-                  <Text style={styles.revenueValue}>$678,400</Text>
-                  <Text style={styles.revenueLabel}>Last 30 Days</Text>
-                  <Text style={styles.revenueChange}>+12.5%</Text>
+                  <Text style={styles.revenueValue}>${Number(scopedKpis.revenue_30d || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</Text>
+                  <Text style={styles.revenueLabel}>Revenue</Text>
+                  <Text style={styles.revenueChange}>{scopedKpis.days_with_data || 0} reporting days</Text>
                 </View>
                 <View style={styles.revenueCard}>
                   <TrendingUp color={COLORS.emeraldGreen} size={24} />
-                  <Text style={styles.revenueValue}>$116,200</Text>
-                  <Text style={styles.revenueLabel}>This Week</Text>
-                  <Text style={styles.revenueChange}>+8.3%</Text>
+                  <Text style={styles.revenueValue}>{Number(scopedKpis.net_margin_pct || 0).toFixed(1)}%</Text>
+                  <Text style={styles.revenueLabel}>Operating Margin</Text>
+                  <Text style={styles.revenueChange}>After food + labor</Text>
                 </View>
                 <View style={styles.revenueCard}>
                   <Target color={COLORS.electricBlue} size={24} />
-                  <Text style={styles.revenueValue}>94.2%</Text>
-                  <Text style={styles.revenueLabel}>Target Achievement</Text>
-                  <Text style={styles.revenueChange}>-1.8%</Text>
+                  <Text style={styles.revenueValue}>{Number(scopedKpis.sla_pct_30d || 0).toFixed(1)}%</Text>
+                  <Text style={styles.revenueLabel}>SLA Performance</Text>
+                  <Text style={styles.revenueChange}>{Number(scopedKpis.orders_30d || 0).toLocaleString()} orders</Text>
                 </View>
               </View>
+              )}
             </View>
 
-            {/* Brand Performance */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>BRAND PERFORMANCE</Text>
-              <View style={styles.brandList}>
-                <View style={styles.brandCard}>
+              <Text style={styles.sectionTitle}>MONTHLY OPERATING RECORD</Text>
+              {scopedMonthly.length === 0 ? <Text style={styles.emptyText}>Monthly statements have not been published for this location.</Text> : scopedMonthly.slice(0, 3).map((month) => (
+                <View key={month.id} style={styles.brandCard}>
                   <View style={styles.brandHeader}>
-                    <Text style={styles.brandName}>Patty Daddy</Text>
-                    <Text style={styles.brandRevenue}>$97,300</Text>
+                    <Text style={styles.brandName}>{new Date(month.month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</Text>
+                    <Text style={styles.brandRevenue}>${Number(month.revenue).toLocaleString(undefined, { maximumFractionDigits: 0 })}</Text>
                   </View>
                   <View style={styles.brandMetrics}>
-                    <Text style={styles.brandMetric}>AOV: $22.75</Text>
-                    <Text style={styles.brandMetric}>Orders: 3,156</Text>
-                    <Text style={styles.brandMetric}>Margin: 28.9%</Text>
-                  </View>
-                  <View style={styles.brandProgress}>
-                    <View style={[styles.brandProgressFill, { width: '89%' }]} />
+                    <Text style={styles.brandMetric}>{Number(month.orders_count || 0).toLocaleString()} orders</Text>
+                    <Text style={styles.brandMetric}>Avg ${Number(month.avg_ticket || 0).toFixed(2)}</Text>
+                    <Text style={styles.brandMetric}>EBITDA ${Number(month.ebitda || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</Text>
                   </View>
                 </View>
-
-                <View style={styles.brandCard}>
-                  <View style={styles.brandHeader}>
-                    <Text style={styles.brandName}>Angel Wings</Text>
-                    <Text style={styles.brandRevenue}>$122,400</Text>
-                  </View>
-                  <View style={styles.brandMetrics}>
-                    <Text style={styles.brandMetric}>AOV: $18.50</Text>
-                    <Text style={styles.brandMetric}>Orders: 2,847</Text>
-                    <Text style={styles.brandMetric}>Margin: 32.1%</Text>
-                  </View>
-                  <View style={styles.brandProgress}>
-                    <View style={[styles.brandProgressFill, { width: '95%' }]} />
-                  </View>
-                </View>
-
-                <View style={styles.brandCard}>
-                  <View style={styles.brandHeader}>
-                    <Text style={styles.brandName}>Taco Yaki</Text>
-                    <Text style={styles.brandRevenue}>$86,700</Text>
-                  </View>
-                  <View style={styles.brandMetrics}>
-                    <Text style={styles.brandMetric}>AOV: $16.25</Text>
-                    <Text style={styles.brandMetric}>Orders: 1,923</Text>
-                    <Text style={styles.brandMetric}>Margin: 35.7%</Text>
-                  </View>
-                  <View style={styles.brandProgress}>
-                    <View style={[styles.brandProgressFill, { width: '78%' }]} />
-                  </View>
-                </View>
-              </View>
+              ))}
             </View>
 
-            {/* Quick Actions */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>QUICK ACTIONS</Text>
               <View style={styles.quickActions}>
-                <TouchableOpacity style={styles.quickAction}>
+                <TouchableOpacity style={styles.quickAction} onPress={() => setActiveTab('financials')}>
                   <BarChart3 color={COLORS.emeraldGreen} size={24} />
-                  <Text style={styles.quickActionText}>View Reports</Text>
+                  <Text style={styles.quickActionText}>Open Financials</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.quickAction}>
+                <TouchableOpacity style={styles.quickAction} onPress={() => setActiveTab('statements')}>
                   <Users color={COLORS.electricBlue} size={24} />
-                  <Text style={styles.quickActionText}>Staff Overview</Text>
+                  <Text style={styles.quickActionText}>Review Statements</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.quickAction}>
+                <TouchableOpacity style={styles.quickAction} onPress={() => setActiveTab('decisions')}>
                   <AlertCircle color={COLORS.moltenGold} size={24} />
-                  <Text style={styles.quickActionText}>View Alerts</Text>
+                  <Text style={styles.quickActionText}>Decision Brief</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -245,165 +231,91 @@ export default function PartnerPortal() {
             <View style={styles.locationCard}>
               <View style={styles.locationHeader}>
                 <MapPin color={COLORS.moltenGold} size={20} />
-                <Text style={styles.locationName}>Atlanta HQ</Text>
-                <View style={[styles.statusDot, { backgroundColor: COLORS.emeraldGreen }]} />
+                <Text style={styles.locationName}>{scopedLocationName}</Text>
+                <View style={[styles.statusDot, { backgroundColor: scopedLocationId ? COLORS.emeraldGreen : COLORS.alertRed }]} />
               </View>
               
               <View style={styles.locationStats}>
                 <View style={styles.locationStat}>
-                  <Text style={styles.locationStatValue}>$678,400</Text>
+                  <Text style={styles.locationStatValue}>${Number(scopedKpis?.revenue_30d || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</Text>
                   <Text style={styles.locationStatLabel}>Revenue (L30D)</Text>
                 </View>
                 <View style={styles.locationStat}>
-                  <Text style={styles.locationStatValue}>42</Text>
-                  <Text style={styles.locationStatLabel}>Employees</Text>
+                  <Text style={styles.locationStatValue}>{Number(scopedKpis?.orders_30d || 0).toLocaleString()}</Text>
+                  <Text style={styles.locationStatLabel}>Orders</Text>
                 </View>
                 <View style={styles.locationStat}>
-                  <Text style={styles.locationStatValue}>8</Text>
-                  <Text style={styles.locationStatLabel}>Active Brands</Text>
+                  <Text style={styles.locationStatValue}>{scopedKpis?.days_with_data || 0}</Text>
+                  <Text style={styles.locationStatLabel}>Reporting Days</Text>
                 </View>
               </View>
 
               <View style={styles.locationMetrics}>
                 <View style={styles.metricRow}>
                   <Text style={styles.metricLabel}>On-Time Rate</Text>
-                  <Text style={styles.metricValue}>94.2%</Text>
+                  <Text style={styles.metricValue}>{Number(scopedKpis?.sla_pct_30d || 0).toFixed(1)}%</Text>
                 </View>
                 <View style={styles.metricRow}>
                   <Text style={styles.metricLabel}>Customer Rating</Text>
-                  <Text style={styles.metricValue}>4.8/5</Text>
+                  <Text style={styles.metricValue}>{Number(scopedKpis?.customer_rating_30d || 0).toFixed(2)}/5</Text>
                 </View>
                 <View style={styles.metricRow}>
-                  <Text style={styles.metricLabel}>Training Compliance</Text>
-                  <Text style={styles.metricValue}>87.5%</Text>
+                  <Text style={styles.metricLabel}>Revenue / Labor Hour</Text>
+                  <Text style={styles.metricValue}>${Number(scopedKpis?.revenue_per_labor_hour || 0).toFixed(2)}</Text>
                 </View>
               </View>
             </View>
 
-            <TouchableOpacity style={styles.viewDetailsButton}>
+            <TouchableOpacity style={styles.viewDetailsButton} onPress={() => setActiveTab('financials')}>
               <Text style={styles.viewDetailsButtonText}>View Detailed Analytics</Text>
             </TouchableOpacity>
           </View>
         );
 
-      case 'payouts':
+      case 'statements':
         return (
-          <View style={styles.tabContentContainer}>
-            <Text style={styles.sectionTitle}>REVENUE SETTLEMENT</Text>
-            
-            <View style={styles.payoutSummary}>
-              <View style={styles.payoutCard}>
-                <Text style={styles.payoutLabel}>This Week</Text>
-                <Text style={styles.payoutAmount}>$116,200</Text>
-                <Text style={styles.payoutStatus}>Cleared</Text>
-              </View>
-              
-              <View style={styles.payoutCard}>
-                <Text style={styles.payoutLabel}>Pending Review</Text>
-                <Text style={styles.payoutAmount}>$8,400</Text>
-                <Text style={styles.payoutStatus}>Under Review</Text>
-              </View>
-            </View>
-
-            <View style={styles.payoutHistory}>
-              <Text style={styles.historyTitle}>Recent Payouts</Text>
-              
-              <View style={styles.payoutItem}>
+          <ScrollView style={styles.tabContentContainer}>
+            <Text style={styles.sectionTitle}>PUBLISHED MONTHLY STATEMENTS</Text>
+            <Text style={styles.contextText}>These are operating statements from the connected reporting ledger. This screen does not label revenue as a payout or settlement.</Text>
+            {scopedMonthly.length === 0 ? <Text style={styles.emptyText}>No statements have been published for this assigned location.</Text> : scopedMonthly.map((month) => (
+              <View key={month.id} style={styles.payoutItem}>
                 <View style={styles.payoutItemLeft}>
-                  <Text style={styles.payoutDate}>Jan 15, 2024</Text>
-                  <Text style={styles.payoutPeriod}>Week of Jan 8-14</Text>
+                  <Text style={styles.payoutDate}>{new Date(month.month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</Text>
+                  <Text style={styles.payoutPeriod}>{Number(month.orders_count || 0).toLocaleString()} orders · Avg ticket ${Number(month.avg_ticket || 0).toFixed(2)}</Text>
                 </View>
                 <View style={styles.payoutItemRight}>
-                  <Text style={styles.payoutItemAmount}>$108,750</Text>
-                  <CheckCircle color={COLORS.emeraldGreen} size={16} />
+                  <Text style={styles.payoutItemAmount}>${Number(month.revenue).toLocaleString(undefined, { maximumFractionDigits: 0 })}</Text>
+                  <Text style={styles.payoutPeriod}>EBITDA ${Number(month.ebitda || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</Text>
                 </View>
               </View>
-
-              <View style={styles.payoutItem}>
-                <View style={styles.payoutItemLeft}>
-                  <Text style={styles.payoutDate}>Jan 8, 2024</Text>
-                  <Text style={styles.payoutPeriod}>Week of Jan 1-7</Text>
-                </View>
-                <View style={styles.payoutItemRight}>
-                  <Text style={styles.payoutItemAmount}>$95,200</Text>
-                  <CheckCircle color={COLORS.emeraldGreen} size={16} />
-                </View>
-              </View>
-
-              <View style={styles.payoutItem}>
-                <View style={styles.payoutItemLeft}>
-                  <Text style={styles.payoutDate}>Jan 1, 2024</Text>
-                  <Text style={styles.payoutPeriod}>Week of Dec 25-31</Text>
-                </View>
-                <View style={styles.payoutItemRight}>
-                  <Text style={styles.payoutItemAmount}>$112,900</Text>
-                  <CheckCircle color={COLORS.emeraldGreen} size={16} />
-                </View>
-              </View>
-            </View>
-
-            <TouchableOpacity style={styles.exportButton}>
-              <Text style={styles.exportButtonText}>Export Payout History</Text>
-            </TouchableOpacity>
-          </View>
+            ))}
+          </ScrollView>
         );
 
-      case 'opportunities':
+      case 'decisions':
         return (
           <View style={styles.tabContentContainer}>
-            <Text style={styles.sectionTitle}>STRATEGIC OPPORTUNITIES</Text>
-            
+            <Text style={styles.sectionTitle}>DECISION BRIEF</Text>
+            <Text style={styles.contextText}>Signals are generated from the assigned location’s current reporting window. They are review prompts, not forecasts or guaranteed outcomes.</Text>
             <View style={styles.opportunityList}>
-              <View style={styles.opportunityCard}>
-                <View style={styles.opportunityHeader}>
-                  <TrendingUp color={COLORS.emeraldGreen} size={20} />
-                  <Text style={styles.opportunityTitle}>Weekend Surge Optimization</Text>
+              {decisionBrief.map((note) => (
+                <View key={note.title} style={[styles.opportunityCard, { borderLeftWidth: 3, borderLeftColor: note.tone }]}>
+                  <View style={styles.opportunityHeader}>
+                    <Target color={note.tone} size={20} />
+                    <Text style={styles.opportunityTitle}>{note.title}</Text>
+                  </View>
+                  <Text style={styles.opportunityDescription}>{note.body}</Text>
                 </View>
-                <Text style={styles.opportunityDescription}>
-                  Mojo Juice shows +14% weekend demand. Consider adding weekend-specific menu items.
-                </Text>
-                <View style={styles.opportunityImpact}>
-                  <Text style={styles.impactLabel}>Potential Impact:</Text>
-                  <Text style={styles.impactValue}>+$12,000/month</Text>
+              ))}
+              {monthChange !== null && (
+                <View style={styles.opportunityCard}>
+                  <View style={styles.opportunityHeader}>
+                    <TrendingUp color={monthChange >= 0 ? COLORS.emeraldGreen : COLORS.alertRed} size={20} />
+                    <Text style={styles.opportunityTitle}>Month-over-month context</Text>
+                  </View>
+                  <Text style={styles.opportunityDescription}>Published revenue changed {monthChange >= 0 ? '+' : ''}{monthChange.toFixed(1)}% from the prior monthly statement. Review the underlying daypart, channel, and cost data before taking action.</Text>
                 </View>
-                <TouchableOpacity style={styles.opportunityButton}>
-                  <Text style={styles.opportunityButtonText}>Learn More</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.opportunityCard}>
-                <View style={styles.opportunityHeader}>
-                  <Target color={COLORS.electricBlue} size={20} />
-                  <Text style={styles.opportunityTitle}>Training Compliance Boost</Text>
-                </View>
-                <Text style={styles.opportunityDescription}>
-                  Increasing training compliance from 87.5% to 95% could improve efficiency by 8%.
-                </Text>
-                <View style={styles.opportunityImpact}>
-                  <Text style={styles.impactLabel}>Potential Impact:</Text>
-                  <Text style={styles.impactValue}>+$8,500/month</Text>
-                </View>
-                <TouchableOpacity style={styles.opportunityButton}>
-                  <Text style={styles.opportunityButtonText}>Learn More</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.opportunityCard}>
-                <View style={styles.opportunityHeader}>
-                  <PieChart color={COLORS.moltenGold} size={20} />
-                  <Text style={styles.opportunityTitle}>Brand Mix Optimization</Text>
-                </View>
-                <Text style={styles.opportunityDescription}>
-                  Taco Yaki has highest margin (35.7%) but lowest volume. Marketing push recommended.
-                </Text>
-                <View style={styles.opportunityImpact}>
-                  <Text style={styles.impactLabel}>Potential Impact:</Text>
-                  <Text style={styles.impactValue}>+$15,200/month</Text>
-                </View>
-                <TouchableOpacity style={styles.opportunityButton}>
-                  <Text style={styles.opportunityButtonText}>Learn More</Text>
-                </TouchableOpacity>
-              </View>
+              )}
             </View>
           </View>
         );
@@ -532,18 +444,16 @@ export default function PartnerPortal() {
             onPress={() => setActiveTab('financials')}
           />
           <TabButton
-            title="Payouts"
+            title="Statements"
             icon={DollarSign}
-            isActive={activeTab === 'payouts'}
-            onPress={() => setActiveTab('payouts')}
-            badge={1}
+            isActive={activeTab === 'statements'}
+            onPress={() => setActiveTab('statements')}
           />
           <TabButton
-            title="Opportunities"
+            title="Decision Brief"
             icon={Target}
-            isActive={activeTab === 'opportunities'}
-            onPress={() => setActiveTab('opportunities')}
-            badge={3}
+            isActive={activeTab === 'decisions'}
+            onPress={() => setActiveTab('decisions')}
           />
         </ScrollView>
 
@@ -657,6 +567,19 @@ const styles = StyleSheet.create({
     color: COLORS.platinum,
     letterSpacing: 2,
     marginBottom: 16,
+  },
+  contextText: {
+    fontSize: 13,
+    color: COLORS.lightGray,
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: COLORS.lightGray,
+    fontStyle: 'italic',
+    lineHeight: 20,
+    paddingVertical: 16,
   },
   revenueGrid: {
     flexDirection: 'row',

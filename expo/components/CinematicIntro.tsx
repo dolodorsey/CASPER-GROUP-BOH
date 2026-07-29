@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   Animated,
+  TouchableOpacity,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { COLORS } from "@/constants/colors";
@@ -13,7 +14,7 @@ interface CinematicIntroProps {
 }
 
 export function CinematicIntro({ onComplete }: CinematicIntroProps) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(1)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
@@ -32,7 +33,7 @@ export function CinematicIntro({ onComplete }: CinematicIntroProps) {
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 1500,
+          duration: 500,
           useNativeDriver: true,
         }),
         Animated.spring(scaleAnim, {
@@ -47,12 +48,12 @@ export function CinematicIntro({ onComplete }: CinematicIntroProps) {
       Animated.parallel([
         Animated.timing(rotateAnim, {
           toValue: 1,
-          duration: 2000,
+          duration: 600,
           useNativeDriver: true,
         }),
         Animated.timing(glowAnim, {
           toValue: 1,
-          duration: 2000,
+          duration: 600,
           useNativeDriver: true,
         }),
       ]),
@@ -60,22 +61,22 @@ export function CinematicIntro({ onComplete }: CinematicIntroProps) {
       // Phase 3: Text appears (6-9s)
       Animated.timing(textFadeAnim, {
         toValue: 1,
-        duration: 1500,
+        duration: 500,
         useNativeDriver: true,
       }),
       
       // Phase 4: Metrics fade in (9-12s)
       Animated.timing(metricsFadeAnim, {
         toValue: 1,
-        duration: 1500,
+        duration: 500,
         useNativeDriver: true,
       }),
       
       // Hold and fade out
-      Animated.delay(1000),
+      Animated.delay(300),
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 800,
+        duration: 300,
         useNativeDriver: true,
       }),
     ]);
@@ -179,6 +180,9 @@ export function CinematicIntro({ onComplete }: CinematicIntroProps) {
           </View>
         </Animated.View>
       </Animated.View>
+      <TouchableOpacity onPress={handleComplete} accessibilityRole="button" accessibilityLabel="Skip introduction" style={styles.skipButton}>
+        <Text style={styles.skipText}>SKIP INTRO →</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -192,6 +196,22 @@ const styles = StyleSheet.create({
   },
   content: {
     alignItems: 'center',
+  },
+  skipButton: {
+    position: 'absolute',
+    top: 24,
+    right: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.24)',
+    borderRadius: 999,
+  },
+  skipText: {
+    color: COLORS.platinum,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.5,
   },
   logoContainer: {
     width: 120,

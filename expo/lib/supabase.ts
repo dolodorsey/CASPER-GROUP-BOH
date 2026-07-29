@@ -1,8 +1,8 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 
-// Read from env first (Vercel / Expo). Falls back to hardcoded values so local
-// dev keeps working even without a .env file.
+// The public client key is safe to ship, but authorization must always be
+// enforced by verified sessions and database row-level security.
 const supabaseUrl =
   process.env.EXPO_PUBLIC_SUPABASE_URL ||
   'https://qhgmukwoennurwuvmbhy.supabase.co';
