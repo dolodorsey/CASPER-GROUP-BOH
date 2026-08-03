@@ -16,7 +16,6 @@ import {
   DollarSign, MapPin, AlertCircle, BookOpen
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
-import { BRANDS } from "../constants/brands";
 import { CinematicIntro } from "../components/CinematicIntro";
 import { PortalButton } from "../components/PortalButton";
 import { MetricsRail } from "../components/MetricsRail";
@@ -61,12 +60,12 @@ export default function LandingScreen() {
     }));
   }, [liveKpis]);
 
-  // Brand cards from live data or fallback
+  // Never substitute fabricated business performance when live data is unavailable.
   const brandCards = React.useMemo(() => {
     if (liveBrands && liveBrands.length > 0) {
       return liveBrands.map(toBrandCardData);
     }
-    return BRANDS;
+    return [];
   }, [liveBrands]);
 
   // Snapshot values from live data

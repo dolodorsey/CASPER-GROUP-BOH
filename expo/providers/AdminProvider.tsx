@@ -4,6 +4,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AdminState, Alert, KPIMetric, Location, Brand, Incident, Ticket } from '@/types/admin';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/providers/AuthProvider';
 
 interface AdminContextType extends AdminState {
   setActiveTab: (tab: string) => void;
@@ -25,6 +26,7 @@ interface AdminContextType extends AdminState {
 
 export const [AdminProvider, useAdmin] = createContextHook<AdminContextType>(() => {
   const queryClient = useQueryClient();
+  const { userId, profile } = useAuth();
   const [adminState, setAdminState] = useState<AdminState>({
     currentUser: null,
     selectedLocation: null,
@@ -49,15 +51,14 @@ export const [AdminProvider, useAdmin] = createContextHook<AdminContextType>(() 
           }));
         }
         
-        // Load current user from Supabase
-        const { data: userData } = await supabase.auth.getUser();
-        if (userData?.user) {
+        // AccessGate has already verified the database-backed admin profile.
+        if (userId && profile?.role === 'admin') {
           setAdminState(prev => ({
             ...prev,
             currentUser: {
-              id: userData.user.id,
-              email: userData.user.email || '',
-              name: userData.user.user_metadata?.name || 'Admin User',
+              id: userId,
+              email: '',
+              name: profile.full_name || 'Admin User',
               roles: [
                 {
                   id: 'super_admin',
@@ -80,7 +81,7 @@ export const [AdminProvider, useAdmin] = createContextHook<AdminContextType>(() 
     };
     
     loadPersistedState();
-  }, []);
+  }, [userId, profile]);
 
   const persistState = useCallback(async (newState: Partial<AdminState>) => {
     try {

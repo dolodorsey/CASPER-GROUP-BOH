@@ -6,6 +6,8 @@
     "start": "bunx rork start -p pw5968wd6du8xw0c3gnuo --tunnel",
     "start-web": "bunx rork start -p pw5968wd6du8xw0c3gnuo --web --tunnel",
     "start-web-dev": "DEBUG=expo* bunx rork start -p pw5968wd6du8xw0c3gnuo --web --tunnel",
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run typecheck && npm run vercel-build",
     "vercel-build": "npx expo export -p web"
   },
   "dependencies": {
@@ -59,7 +61,8 @@
     "typescript": "~5.9.2"
   },
   "overrides": {
-    "lucide-react-native": "0.447.0"
+    "lucide-react-native": "0.447.0",
+    "@ai-sdk/provider-utils": "3.0.21"
   },
   "private": true
 }
