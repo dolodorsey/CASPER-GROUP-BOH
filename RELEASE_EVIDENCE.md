@@ -44,6 +44,7 @@ The dependency modernization reduces the original 31 findings, including one cri
 
 ## Live platform verification
 
-- Latest Vercel production deployment is ready and matches commit `4fdbba8`.
+- Vercel production deployment `dpl_AcaJVzhPPzrQgwYzTmLh4Z3cHXW9` is READY at `https://casper-group-boh.vercel.app` and contains the Expo 57 release from commit `4408c40`.
+- Live browser verification confirms the authorized-personnel login screen renders and direct anonymous access to `/admin` redirects to `/auth/login`.
 - Vercel reported no runtime error clusters during the seven-day production check.
 - Supabase security advisors fell from seven notices to two: the intentional `is_admin()` RLS helper and the dashboard-level leaked-password-protection setting.
