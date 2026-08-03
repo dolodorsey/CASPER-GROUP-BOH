@@ -101,9 +101,9 @@ export default function LandingScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={[COLORS.deepBlack, COLORS.darkCharcoal, COLORS.deepBlack]} style={StyleSheet.absoluteFillObject} />
+      <LinearGradient colors={[COLORS.deepBlack, COLORS.darkCharcoal, COLORS.deepBlack]} style={StyleSheet.absoluteFill} />
       
-      <View style={StyleSheet.absoluteFillObject}>
+      <View style={StyleSheet.absoluteFill}>
         {Platform.OS === 'web' && (
           <View style={styles.veinContainer}>
             <Animated.View style={[styles.vein, { opacity: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.3] }) }]} />
@@ -252,7 +252,7 @@ export default function LandingScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.deepBlack },
   safeArea: { flex: 1 },
-  veinContainer: { ...StyleSheet.absoluteFillObject, overflow: 'hidden' },
+  veinContainer: { ...StyleSheet.absoluteFill, overflow: 'hidden' },
   vein: { position: 'absolute', width: width * 2, height: height * 2, backgroundColor: COLORS.moltenGold, transform: [{ rotate: '45deg' }], opacity: 0.1 },
   content: { paddingBottom: 40 },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 30 },

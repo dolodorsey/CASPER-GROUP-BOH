@@ -100,7 +100,7 @@ export default function PartnerPortal() {
       <View style={styles.container}>
         <LinearGradient
           colors={[COLORS.deepBlack, COLORS.darkCharcoal]}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
         <View style={styles.gateContainer}>
           <ActivityIndicator size="large" color={COLORS.emeraldGreen} />
@@ -116,7 +116,7 @@ export default function PartnerPortal() {
       <View style={styles.container}>
         <LinearGradient
           colors={[COLORS.deepBlack, COLORS.darkCharcoal]}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.gateContainer}>
@@ -400,7 +400,7 @@ export default function PartnerPortal() {
     <View style={styles.container}>
       <LinearGradient
         colors={[COLORS.deepBlack, COLORS.darkCharcoal]}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
       
       <SafeAreaView style={styles.safeArea}>

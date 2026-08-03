@@ -32,10 +32,10 @@ export default function EmployeePortal() {
     setChatInput(''); refetchChat();
   };
 
-  if (isBooting) return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><View style={st.gate}><ActivityIndicator size="large" color={COLORS.electricBlue}/></View></View>);
+  if (isBooting) return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/><View style={st.gate}><ActivityIndicator size="large" color={COLORS.electricBlue}/></View></View>);
 
   if (!profile || !['employee','admin'].includes(profile.role)) {
-    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><SafeAreaView style={st.safe}><View style={st.gate}><ShieldAlert color={COLORS.alertRed} size={64}/><Text style={st.gateTitle}>ACCESS DENIED</Text><Text style={st.gateSub}>Employee or Admin role required.</Text><TouchableOpacity style={st.gateBtn} onPress={()=>router.back()}><Text style={st.gateBtnText}>Go Back</Text></TouchableOpacity></View></SafeAreaView></View>);
+    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/><SafeAreaView style={st.safe}><View style={st.gate}><ShieldAlert color={COLORS.alertRed} size={64}/><Text style={st.gateTitle}>ACCESS DENIED</Text><Text style={st.gateSub}>Employee or Admin role required.</Text><TouchableOpacity style={st.gateBtn} onPress={()=>router.back()}><Text style={st.gateBtnText}>Go Back</Text></TouchableOpacity></View></SafeAreaView></View>);
   }
 
   const myTasks = tasks?.filter((t:any) => t.status === 'pending' || t.status === 'in_progress') ?? [];
@@ -51,7 +51,7 @@ export default function EmployeePortal() {
     const tot = bl.length+(qz.length>0?1:0); const isQ = lessonBlock>=bl.length&&qz.length>0;
     const prog = tot>0?((lessonBlock+1)/tot)*100:0; const cb = !isQ?bl[lessonBlock]:null;
     const submitQuiz = async()=>{let c=0;qz.forEach((q:any,i:number)=>{if(quizAnswers[i]===q.correct_answer_index)c++;});const sc=Math.round((c/qz.length)*100);if(userId){await supabase.from('cg_training_progress').upsert({module_id:selectedTraining.id,user_id:userId,status:'completed',quiz_score:sc,quiz_answers:quizAnswers,current_block:bl.length,completed_at:new Date().toISOString()},{onConflict:'module_id,user_id'});}};
-    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><SafeAreaView style={st.safe}>
+    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/><SafeAreaView style={st.safe}>
       <View style={st.backHeader}><TouchableOpacity onPress={()=>{setActiveTab('training');setSelectedTraining(null);}} style={st.backBtn}><ArrowLeft color={COLORS.pureWhite} size={22}/></TouchableOpacity><Text style={st.backTitle} numberOfLines={1}>{selectedTraining.title}</Text></View>
       <View style={st.progressBg}><View style={[st.progressFill,{width:`${prog}%` as `${number}%`}]}/></View>
       <Text style={[st.sub,{textAlign:'center',marginVertical:8}]}>{lessonBlock+1}/{tot}</Text>
@@ -74,7 +74,7 @@ export default function EmployeePortal() {
   ];
 
   return (
-    <View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/>
+    <View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/>
       <SafeAreaView style={st.safe}>
         <View style={st.header}><View style={{flex:1}}><Text style={st.title}>EMPLOYEE HUB</Text><Text style={st.headerSub}>{profile?.full_name||'Team Member'}</Text></View><TouchableOpacity onPress={()=>router.back()} style={st.closeBtn}><X color={COLORS.pureWhite} size={20}/></TouchableOpacity></View>
 

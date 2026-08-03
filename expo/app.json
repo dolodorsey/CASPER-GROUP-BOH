@@ -8,12 +8,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "caspercontrol",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "app.rork.casper-boh"
@@ -30,12 +24,20 @@
       "output": "single"
     },
     "plugins": [
+      "expo-router",
+      "expo-asset",
+      "expo-font",
+      "expo-image",
       [
-        "expo-router",
+        "expo-splash-screen",
         {
-          "origin": "https://rork.com/"
+          "image": "./assets/images/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   glowOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: COLORS.pureWhite,
   },
 });

@@ -31,7 +31,7 @@ export default function CommandScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <LinearGradient colors={[COLORS.deepBlack, COLORS.darkCharcoal, COLORS.deepBlack]} style={StyleSheet.absoluteFillObject} />
+        <LinearGradient colors={[COLORS.deepBlack, COLORS.darkCharcoal, COLORS.deepBlack]} style={StyleSheet.absoluteFill} />
         <ActivityIndicator size="large" color={COLORS.moltenGold} />
         <Text style={styles.loadingText}>INITIALIZING COMMAND CENTER...</Text>
       </View>
@@ -40,7 +40,7 @@ export default function CommandScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={[COLORS.deepBlack, COLORS.darkCharcoal, COLORS.deepBlack]} style={StyleSheet.absoluteFillObject} />
+      <LinearGradient colors={[COLORS.deepBlack, COLORS.darkCharcoal, COLORS.deepBlack]} style={StyleSheet.absoluteFill} />
 
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.header}>

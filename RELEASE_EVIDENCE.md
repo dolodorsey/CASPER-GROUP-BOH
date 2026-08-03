@@ -19,6 +19,10 @@ This record applies only to the CASPER GROUP BOH brand and deployment. It does n
 - Applied production migrations `harden_casper_boh_rls` and `lock_down_privileged_functions` to Supabase project `qhgmukwoennurwuvmbhy`.
 - Applied `restrict_legacy_rpc_surface`: five unused legacy `SECURITY DEFINER` helpers are now service-only. The only remaining signed-in privileged helper is `is_admin()`, which is intentionally required by the live RLS policies and has no caller-controlled arguments.
 - Verified TypeScript compilation and Expo web export.
+- Upgraded the complete application foundation from Expo 54 / React Native 0.79 to Expo 57 / React Native 0.86 / React 19.2, with compatible Router, Supabase, TanStack Query, tRPC, and native modules.
+- Removed the obsolete Rork toolkit, Rork Metro transformer, Rork start commands, and Bun lockfile. BOH now builds independently with standard Expo tooling and a single npm dependency lock.
+- Updated all React Native fill styles and moved splash configuration to the Expo 57 plugin schema.
+- Expo Doctor passes all 20 compatibility checks and the production dependency audit reports zero vulnerabilities.
 
 ## Verification commands
 
@@ -29,7 +33,7 @@ npm run verify
 npm audit --omit=dev
 ```
 
-Compatible dependency updates reduced the audit from 31 findings, including one critical finding, to 19 transitive findings with no critical finding. The remaining items require breaking Expo/toolkit upgrades and are not silently forced into this release.
+The dependency modernization reduces the original 31 findings, including one critical finding, to zero production findings.
 
 ## Production checks
 

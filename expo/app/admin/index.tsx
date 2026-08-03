@@ -98,7 +98,7 @@ export default function AdminDashboard() {
   if (screen === 'location' && selectedLocation) {
     const la = activeAlerts.filter((a:any)=>a.location_id===selectedLocation.id);
     const lt = pendingTasks.filter((t:any)=>t.location_id===selectedLocation.id);
-    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title={selectedLocation.name} onBack={()=>setScreen('home')}/><ScrollView contentContainerStyle={{padding:16}}>
+    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title={selectedLocation.name} onBack={()=>setScreen('home')}/><ScrollView contentContainerStyle={{padding:16}}>
       <Text style={st.locCity}>{selectedLocation.city}, {selectedLocation.state}</Text>
       <View style={st.statsRow}><View style={st.statBox}><Text style={st.statNum}>{la.length}</Text><Text style={st.statLbl}>ALERTS</Text></View><View style={st.statBox}><Text style={st.statNum}>{lt.length}</Text><Text style={st.statLbl}>TASKS</Text></View><View style={st.statBox}><Text style={st.statNum}>{brands?.length??0}</Text><Text style={st.statLbl}>BRANDS</Text></View></View>
       <View style={st.quickActions}>
@@ -114,7 +114,7 @@ export default function AdminDashboard() {
   // SOPS LIST
   if (screen === 'sops') {
     const cats = [...new Set(sops?.map((s:any)=>s.category)??[])];
-    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title="SOPs & Documents" onBack={()=>setScreen('home')}/><ScrollView contentContainerStyle={{padding:16}}>
+    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title="SOPs & Documents" onBack={()=>setScreen('home')}/><ScrollView contentContainerStyle={{padding:16}}>
       {cats.map((cat:string)=>(<View key={cat}><Text style={st.secTitle}>{cat.toUpperCase().replace('_',' ')}</Text>
         {sops?.filter((s:any)=>s.category===cat).map((sop:any,i:number)=>(<TouchableOpacity key={i} style={st.row} onPress={()=>{setSelectedSop(sop);setScreen('sop_detail');}}>
           <FileText color={COLORS.emeraldGreen} size={16}/>
@@ -130,7 +130,7 @@ export default function AdminDashboard() {
 
   // SOP DETAIL
   if (screen === 'sop_detail' && selectedSop) {
-    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title={selectedSop.title} onBack={()=>setScreen('sops')}/><ScrollView contentContainerStyle={{padding:16}}>
+    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title={selectedSop.title} onBack={()=>setScreen('sops')}/><ScrollView contentContainerStyle={{padding:16}}>
       <View style={{flexDirection:'row',gap:8,marginBottom:12}}><View style={[st.badge,{alignSelf:'flex-start'}]}><Text style={st.badgeText}>{selectedSop.category?.toUpperCase()}</Text></View>{selectedSop.version&&<View style={[st.badge,{backgroundColor:COLORS.darkCharcoal}]}><Text style={[st.badgeText,{color:COLORS.platinum}]}>V{selectedSop.version}</Text></View>}</View>
       <Text style={st.sopContent}>{selectedSop.content}</Text>
       {selectedSop.file_url&&<TouchableOpacity style={[st.row,{marginTop:16,justifyContent:'center'}]} onPress={()=>Linking.openURL(selectedSop.file_url)}><Download color={COLORS.electricBlue} size={18}/><Text style={[st.rowText,{color:COLORS.electricBlue,marginLeft:8}]}>View Document</Text></TouchableOpacity>}
@@ -141,7 +141,7 @@ export default function AdminDashboard() {
   // TASKS
   if (screen === 'tasks') {
     const sorted = [...(filteredTasks??[])].sort((a:any,b:any)=>{const p:Record<string,number>={critical:0,high:1,medium:2,low:3};return(p[a.priority]??4)-(p[b.priority]??4);});
-    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><SafeAreaView style={st.safe} edges={['top']}>
+    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/><SafeAreaView style={st.safe} edges={['top']}>
       <BackHeader title="Tasks" onBack={()=>{setTaskLocationFilter(null);setScreen('home');}} rightAction={<TouchableOpacity onPress={()=>setShowCreateTask(true)} style={st.plusBtn}><Plus color={COLORS.deepBlack} size={18}/></TouchableOpacity>}/>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{maxHeight:44,paddingHorizontal:16}} contentContainerStyle={{gap:6,alignItems:'center'}}>
         <TouchableOpacity style={[st.filterChip,!taskLocationFilter&&st.filterChipActive]} onPress={()=>setTaskLocationFilter(null)}><Text style={[st.filterChipText,!taskLocationFilter&&st.filterChipTextActive]}>All</Text></TouchableOpacity>
@@ -167,7 +167,7 @@ export default function AdminDashboard() {
 
   // TRAINING LIST
   if (screen === 'training') {
-    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title="Training" onBack={()=>setScreen('home')}/><ScrollView contentContainerStyle={{padding:16}}>
+    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title="Training" onBack={()=>setScreen('home')}/><ScrollView contentContainerStyle={{padding:16}}>
       {training?.map((t:any,i:number)=>{const bl=t.content_blocks??[];const hq=(t.quiz_questions??[]).length>0;return(
         <TouchableOpacity key={i} style={st.row} onPress={()=>{setSelectedTraining(t);if(bl.length>0){setLessonBlock(0);setQuizAnswers({});setScreen('training_lesson');}else setScreen('training_detail');}}>
           <BookOpen color={t.is_required?COLORS.moltenGold:COLORS.electricBlue} size={16}/>
@@ -180,7 +180,7 @@ export default function AdminDashboard() {
 
   // TRAINING DETAIL (fallback)
   if (screen === 'training_detail' && selectedTraining) {
-    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title={selectedTraining.title} onBack={()=>setScreen('training')}/><ScrollView contentContainerStyle={{padding:16}}>
+    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title={selectedTraining.title} onBack={()=>setScreen('training')}/><ScrollView contentContainerStyle={{padding:16}}>
       <Text style={st.rowSub}>{selectedTraining.estimated_minutes} minutes</Text><Text style={[st.sopContent,{marginTop:16}]}>{selectedTraining.description}</Text>
     </ScrollView></SafeAreaView></View>);
   }
@@ -191,7 +191,7 @@ export default function AdminDashboard() {
     const tot = bl.length+(qz.length>0?1:0); const isQ = lessonBlock>=bl.length&&qz.length>0;
     const prog = tot>0?((lessonBlock+1)/tot)*100:0; const cb = !isQ?bl[lessonBlock]:null;
     const submitQuiz = async()=>{let c=0;qz.forEach((q:any,i:number)=>{if(quizAnswers[i]===q.correct_answer_index)c++;});const sc=Math.round((c/qz.length)*100);const ps=sc>=(selectedTraining.passing_score||80);if(userId){await supabase.from('cg_training_progress').upsert({module_id:selectedTraining.id,user_id:userId,status:'completed',quiz_score:sc,quiz_answers:quizAnswers,current_block:bl.length,completed_at:new Date().toISOString()},{onConflict:'module_id,user_id'});}RNAlert.alert(ps?'Passed!':'Not Passed','Score: '+sc+'%');};
-    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title={selectedTraining.title} onBack={()=>setScreen('training')}/>
+    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title={selectedTraining.title} onBack={()=>setScreen('training')}/>
       <View style={st.progressBarBg}><View style={[st.progressBarFill,{width:`${prog}%` as `${number}%`}]}/></View>
       <Text style={[st.rowSub,{textAlign:'center',marginVertical:8}]}>{lessonBlock+1} / {tot}</Text>
       <ScrollView contentContainerStyle={{padding:16,flexGrow:1}}>
@@ -211,7 +211,7 @@ export default function AdminDashboard() {
   // CHAT
   if (screen === 'chat') {
     const si = (sc:string) => { if(sc==='global') return <Globe color={COLORS.moltenGold} size={18}/>; if(sc==='location') return <MapPin color={COLORS.electricBlue} size={18}/>; if(sc==='managers') return <Shield color={COLORS.emeraldGreen} size={18}/>; if(sc==='hq') return <Building color={COLORS.platinum} size={18}/>; return <MessageSquare color={COLORS.lightGray} size={18}/>; };
-    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><SafeAreaView style={st.safe} edges={['top']}>
+    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/><SafeAreaView style={st.safe} edges={['top']}>
       <BackHeader title="Team Chat" onBack={()=>setScreen('home')} rightAction={<TouchableOpacity onPress={()=>setShowCreateChannel(true)} style={st.plusBtn}><Plus color={COLORS.deepBlack} size={18}/></TouchableOpacity>}/>
       <ScrollView contentContainerStyle={{padding:16}}>
         {channels?.map((ch:any,i:number)=>(<TouchableOpacity key={i} style={st.row} onPress={()=>{setSelectedChannel(ch);setScreen('chat_channel');}}>{si(ch.scope||ch.type)}<View style={{flex:1,marginLeft:12}}><Text style={st.rowText}>#{ch.name}</Text><Text style={st.rowSub}>{ch.scope||ch.type}{ch.min_role&&ch.min_role!=='employee'?' · '+ch.min_role+'+':''}</Text></View><ChevronRight color={COLORS.lightGray} size={16}/></TouchableOpacity>))}
@@ -227,7 +227,7 @@ export default function AdminDashboard() {
 
   // CHAT CHANNEL
   if (screen === 'chat_channel' && selectedChannel) {
-    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><SafeAreaView style={st.safe} edges={['top','bottom']}>
+    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/><SafeAreaView style={st.safe} edges={['top','bottom']}>
       <BackHeader title={'#'+selectedChannel.name} onBack={()=>setScreen('chat')}/>
       <ScrollView style={{flex:1}} contentContainerStyle={{padding:16}}>{chatMessages?.map((m:any,i:number)=>(<View key={i} style={st.msgBubble}><Text style={st.msgBody}>{m.body}</Text><Text style={st.msgTime}>{new Date(m.created_at).toLocaleString()}</Text></View>))}{(!chatMessages||chatMessages.length===0)&&<Text style={st.rowSub}>No messages yet.</Text>}</ScrollView>
       <View style={st.chatInputRow}><TextInput style={st.chatInput} placeholder="Type a message..." placeholderTextColor={COLORS.lightGray} value={chatInput} onChangeText={setChatInput}/><TouchableOpacity style={st.sendBtn} onPress={sendMessage}><Send color={COLORS.deepBlack} size={18}/></TouchableOpacity></View>
@@ -236,14 +236,14 @@ export default function AdminDashboard() {
 
   // ALERTS
   if (screen === 'alerts') {
-    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title="Alerts" onBack={()=>setScreen('home')}/><ScrollView contentContainerStyle={{padding:16}} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={()=>refetchAlerts()} tintColor={COLORS.moltenGold}/>}>
+    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title="Alerts" onBack={()=>setScreen('home')}/><ScrollView contentContainerStyle={{padding:16}} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={()=>refetchAlerts()} tintColor={COLORS.moltenGold}/>}>
       {alerts?.map((a:any,i:number)=>(<View key={i} style={[st.row,{borderLeftWidth:3,borderLeftColor:a.severity==='critical'?COLORS.alertRed:a.severity==='warning'?COLORS.warning:COLORS.info}]}><AlertTriangle color={a.severity==='critical'||a.severity==='error'?COLORS.alertRed:COLORS.warning} size={16}/><View style={{flex:1,marginLeft:10}}><Text style={st.rowText}>{a.title}</Text><Text style={st.rowSub}>{a.severity.toUpperCase()} · {a.source||'System'} · {a.status}</Text></View></View>))}
     </ScrollView></SafeAreaView></View>);
   }
 
   // REPORTS
   if (screen === 'reports') {
-    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title="Reports" onBack={()=>setScreen('home')}/><ScrollView contentContainerStyle={{padding:16}}>
+    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title="Reports" onBack={()=>setScreen('home')}/><ScrollView contentContainerStyle={{padding:16}}>
       <View style={{flexDirection:'row',gap:6,marginBottom:12}}>{(['today','week','month'] as const).map(p=>(<TouchableOpacity key={p} style={[st.filterChip,reportPeriod===p&&st.filterChipActive]} onPress={()=>setReportPeriod(p)}><Text style={[st.filterChipText,reportPeriod===p&&st.filterChipTextActive]}>{p==='today'?'Today':p==='week'?'7 Days':'30 Days'}</Text></TouchableOpacity>))}</View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginBottom:16}} contentContainerStyle={{gap:6}}>
         <TouchableOpacity style={[st.filterChip,!reportLocationFilter&&st.filterChipActive]} onPress={()=>setReportLocationFilter(null)}><Text style={[st.filterChipText,!reportLocationFilter&&st.filterChipTextActive]}>National</Text></TouchableOpacity>
@@ -270,7 +270,7 @@ export default function AdminDashboard() {
     const ws = new Date(scheduleWeekOf);
     const pw = () => {const d=new Date(scheduleWeekOf);d.setDate(d.getDate()-7);setScheduleWeekOf(d.toISOString().split('T')[0]);};
     const nw = () => {const d=new Date(scheduleWeekOf);d.setDate(d.getDate()+7);setScheduleWeekOf(d.toISOString().split('T')[0]);};
-    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><SafeAreaView style={st.safe} edges={['top']}>
+    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/><SafeAreaView style={st.safe} edges={['top']}>
       <BackHeader title="Schedule" onBack={()=>{setScheduleLocationId(null);setScreen('home');}}/>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{maxHeight:44,paddingHorizontal:16}} contentContainerStyle={{gap:6,alignItems:'center'}}>
         {locations?.map((l:any)=>(<TouchableOpacity key={l.id} style={[st.filterChip,effSchedLoc===l.id&&st.filterChipActive]} onPress={()=>setScheduleLocationId(l.id)}><Text style={[st.filterChipText,effSchedLoc===l.id&&st.filterChipTextActive]}>{l.name}</Text></TouchableOpacity>))}
@@ -292,7 +292,7 @@ export default function AdminDashboard() {
 
   // SETTINGS
   if (screen === 'settings') {
-    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title="Settings" onBack={()=>setScreen('home')}/><ScrollView contentContainerStyle={{padding:16}}>
+    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title="Settings" onBack={()=>setScreen('home')}/><ScrollView contentContainerStyle={{padding:16}}>
       <View style={st.row}><Shield color={COLORS.moltenGold} size={18}/><View style={{flex:1,marginLeft:10}}><Text style={st.rowText}>{profile?.full_name||'Admin'}</Text><Text style={st.rowSub}>{(profile?.role||'admin').toUpperCase()}</Text></View></View>
       <Text style={st.secTitle}>LOCATIONS ({locations?.length})</Text>
       {locations?.map((l:any,i:number)=>(<View key={i} style={st.row}><MapPin color={COLORS.electricBlue} size={14}/><View style={{flex:1,marginLeft:10}}><Text style={st.rowText}>{l.name}</Text><Text style={st.rowSub}>{l.city}, {l.state}</Text></View><View style={[st.tagBadge,{backgroundColor:l.status==='active'?COLORS.emeraldGreen:COLORS.alertRed}]}><Text style={st.tagText}>{(l.status||'ACTIVE').toUpperCase()}</Text></View></View>))}
@@ -308,7 +308,7 @@ export default function AdminDashboard() {
 
   // USERS
   if (screen === 'users') {
-    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title="Users" onBack={()=>setScreen('settings')}/><ScrollView contentContainerStyle={{padding:16}}>
+    return (<View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/><SafeAreaView style={st.safe} edges={['top']}><BackHeader title="Users" onBack={()=>setScreen('settings')}/><ScrollView contentContainerStyle={{padding:16}}>
       {allProfiles?.map((u:any,i:number)=>(<View key={i} style={st.row}><Users color={COLORS.electricBlue} size={16}/><View style={{flex:1,marginLeft:10}}><Text style={st.rowText}>{u.full_name||u.id?.slice(0,8)}</Text><Text style={st.rowSub}>{(u.role||'employee').toUpperCase()}{u.role_level!=null?' · L'+u.role_level:''}</Text></View><View style={[st.tagBadge,{backgroundColor:u.role==='admin'?COLORS.moltenGold:COLORS.darkCharcoal}]}><Text style={st.tagText}>{(u.role||'EMP').toUpperCase()}</Text></View></View>))}
       {(!allProfiles||allProfiles.length===0)&&<Text style={st.rowSub}>No users found.</Text>}
     </ScrollView></SafeAreaView></View>);
@@ -316,7 +316,7 @@ export default function AdminDashboard() {
 
   // HOME
   return (
-    <View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFillObject}/>
+    <View style={st.container}><LinearGradient colors={[COLORS.deepBlack,COLORS.darkCharcoal]} style={StyleSheet.absoluteFill}/>
       <SafeAreaView style={st.safe} edges={['top']}><ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.moltenGold}/>}>
         <View style={st.header}><LinearGradient colors={[COLORS.moltenGold,COLORS.darkGold]} style={st.headerIcon}><Shield color={COLORS.deepBlack} size={20}/></LinearGradient><View style={{flex:1}}><Text style={st.title}>ADMIN COMMAND</Text><Text style={st.subtitle}>Welcome back, {profile?.full_name||'Admin'}</Text></View><TouchableOpacity onPress={()=>router.back()} style={st.closeBtn}><XIcon color={COLORS.pureWhite} size={20}/></TouchableOpacity></View>
         <View style={st.statsRow}>

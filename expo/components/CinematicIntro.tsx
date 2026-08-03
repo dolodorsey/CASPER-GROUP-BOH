@@ -93,7 +93,7 @@ export function CinematicIntro({ onComplete }: CinematicIntroProps) {
     <View style={styles.container}>
       <LinearGradient
         colors={[COLORS.deepBlack, COLORS.darkCharcoal, COLORS.deepBlack]}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
       
       <Animated.View

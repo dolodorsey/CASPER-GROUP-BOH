@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   gridOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0.1,
   },
   gridLine: {
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   connectionLines: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
   },
