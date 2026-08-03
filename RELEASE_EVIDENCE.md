@@ -23,6 +23,8 @@ This record applies only to the CASPER GROUP BOH brand and deployment. It does n
 - Removed the obsolete Rork toolkit, Rork Metro transformer, Rork start commands, and Bun lockfile. BOH now builds independently with standard Expo tooling and a single npm dependency lock.
 - Updated all React Native fill styles and moved splash configuration to the Expo 57 plugin schema.
 - Expo Doctor passes all 20 compatibility checks and the production dependency audit reports zero vulnerabilities.
+- Production Hermes bundles export successfully for both iOS (`entry-541ca94029314f88eaeb1f4002cf7b0b.hbc`) and Android (`entry-ef840194d1f98b4f6fbd12f59438140a.hbc`).
+- EAS release profiles now require current tooling, use remote version sources, auto-increment production releases, and generate an Android App Bundle for the store.
 
 ## Verification commands
 
