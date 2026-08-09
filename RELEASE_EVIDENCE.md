@@ -30,6 +30,7 @@ This record applies only to the CASPER GROUP BOH brand and deployment. It does n
 - Stocked production with 12 canonical active brands, lifecycle SOPs, training modules, channels, and non-fabricated location reference data.
 - Added automated backend contract tests and a GitHub quality gate.
 - Preserved live KPIs and reports; no revenue, order, alert, staff, incident, or financial records were fabricated.
+- Added an automation-only iOS build and submission workflow that runs after a successful main quality gate and stays skipped until a valid EAS project ID is configured.
 
 ## Verification commands
 

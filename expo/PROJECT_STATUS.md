@@ -7,7 +7,7 @@ Updated: 2026-08-09
 - Web production: deployed and verified
 - Supabase: live authenticated operating core with 12 active CASPER brands
 - GitHub: automated backend, test, TypeScript, web export, and dependency quality gate
-- Native builds: Expo configuration present; EAS project linking and store credentials still required
+- Native builds: automation workflow present; EAS project linking and store credentials still required
 
 ## Completed
 
@@ -21,6 +21,6 @@ Updated: 2026-08-09
 
 1. Link this repository to the correct EAS project.
 2. Configure `EXPO_TOKEN` plus non-interactive iOS signing and App Store Connect credentials.
-3. Add and run an automated production build/submission workflow. Manual iOS deployment is prohibited.
+3. Let the automated workflow build and submit after the next successful main quality gate. Manual iOS deployment is prohibited.
 
 See `README.md` and the repository-level `RELEASE_EVIDENCE.md` for the verified commands and production evidence.

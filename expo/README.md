@@ -18,7 +18,7 @@ Authenticated operations application for the CASPER Group portfolio. This reposi
 - Supabase Auth, PostgreSQL, and row-level security
 - TanStack Query
 - Vercel web deployment
-- EAS build profiles for native releases
+- EAS build profiles plus a post-quality-gate automated iOS build/submission workflow
 
 ## Environment
 
@@ -52,6 +52,6 @@ Revenue, orders, KPIs, alerts, incidents, staff, and financial records are live 
 
 ## Mobile release policy
 
-Do not deploy iOS manually. Complete EAS project linking and store credentials, then run a non-interactive automated build and submission workflow.
+Do not deploy iOS manually. The automated workflow stays skipped until the `EAS_PROJECT_ID` repository variable and `EXPO_TOKEN` secret are configured. EAS must also hold valid non-interactive signing and App Store Connect credentials.
 
 See `PROJECT_STATUS.md` and the repository-level `RELEASE_EVIDENCE.md` for verified status.
