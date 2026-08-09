@@ -1,0 +1,37 @@
+name: CASPER BOH Automated iOS Release
+
+on:
+  workflow_run:
+    workflows: [CASPER BOH Quality Gate]
+    types: [completed]
+
+jobs:
+  build-and-submit:
+    if: >-
+      ${{ github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.head_branch == 'main' &&
+          vars.EAS_PROJECT_ID != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: expo
+    env:
+      EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: expo/package-lock.json
+      - run: npm ci --ignore-scripts
+      - name: Verify non-interactive release credentials
+        run: |
+          test -n "${EAS_PROJECT_ID:-}"
+          test -n "${EXPO_TOKEN:-}"
+      - name: Build and submit iOS through EAS
+        run: npx --yes eas-cli@21.7.0 build --platform ios --profile production --non-interactive --auto-submit
