@@ -1,0 +1,29 @@
+name: CASPER BOH Production Smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23,53 * * * *'
+  workflow_run:
+    workflows: ['CASPER BOH Quality Gate']
+    types: [completed]
+    branches: [main]
+
+concurrency:
+  group: casper-boh-production-smoke
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: expo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm run smoke:production
