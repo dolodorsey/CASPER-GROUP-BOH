@@ -45,3 +45,4 @@ core
 node_modules
 .expo
 .env*
+!.env.production
