@@ -12,7 +12,7 @@
     "smoke:production": "node scripts/production-smoke.mjs",
     "audit:production": "node scripts/audit-production.mjs",
     "verify": "npm run verify:backend && npm test && npm run typecheck && npm run vercel-build && npm run audit:production",
-    "vercel-build": "EXPO_NO_TELEMETRY=1 npx expo export -p web"
+    "vercel-build": "EXPO_NO_TELEMETRY=1 npx expo export -p web --clear"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.8",
