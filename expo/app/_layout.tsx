@@ -6,6 +6,8 @@ import { CasperProvider } from "@/providers/CasperProvider";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { COLORS } from "@/constants/colors";
 
+const releaseSha = process.env.EXPO_PUBLIC_BUILD_SHA ?? "local";
+
 function SessionGate() {
   const segments = useSegments();
   const { userId, profile, isBooting, signOut } = useAuth();
@@ -48,6 +50,12 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <View
+        testID={`casper-boh-release-${releaseSha}`}
+        style={styles.releaseStamp}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      />
       <AuthProvider>
         <CasperProvider>
           <SessionGate />
@@ -58,6 +66,7 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
+  releaseStamp: { display: "none" },
   gate: {
     flex: 1,
     alignItems: "center",
