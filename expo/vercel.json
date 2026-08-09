@@ -1,8 +1,20 @@
 {
-  "buildCommand": "npx expo export -p web",
+  "buildCommand": "EXPO_PUBLIC_BUILD_SHA=$VERCEL_GIT_COMMIT_SHA npx expo export -p web",
   "outputDirectory": "dist",
   "framework": null,
-  "installCommand": "npm install --legacy-peer-deps",
+  "installCommand": "npm ci --ignore-scripts",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://qhgmukwoennurwuvmbhy.supabase.co wss://qhgmukwoennurwuvmbhy.supabase.co; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'" },
+        { "key": "Permissions-Policy", "value": "camera=(), geolocation=(self), microphone=()" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",

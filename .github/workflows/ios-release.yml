@@ -1,5 +1,8 @@
 name: CASPER BOH Automated iOS Release
 
+permissions:
+  contents: read
+
 on:
   workflow_run:
     workflows: [CASPER BOH Quality Gate]
