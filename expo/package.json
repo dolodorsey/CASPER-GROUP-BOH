@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "verify:backend": "node scripts/verify-backend-config.mjs",
     "smoke:production": "node scripts/production-smoke.mjs",
-    "verify": "npm run verify:backend && npm test && npm run typecheck && npm run vercel-build && npm audit --omit=dev --audit-level=critical",
+    "audit:production": "node scripts/audit-production.mjs",
+    "verify": "npm run verify:backend && npm test && npm run typecheck && npm run vercel-build && npm run audit:production",
     "vercel-build": "EXPO_NO_TELEMETRY=1 npx expo export -p web"
   },
   "dependencies": {
