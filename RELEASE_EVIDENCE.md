@@ -1,6 +1,6 @@
 # CASPER GROUP BOH Release Evidence
 
-Updated: 2026-08-03
+Updated: 2026-08-09
 
 ## Scope
 
@@ -19,12 +19,17 @@ This record applies only to the CASPER GROUP BOH brand and deployment. It does n
 - Applied production migrations `harden_casper_boh_rls` and `lock_down_privileged_functions` to Supabase project `qhgmukwoennurwuvmbhy`.
 - Applied `restrict_legacy_rpc_surface`: five unused legacy `SECURITY DEFINER` helpers are now service-only. The only remaining signed-in privileged helper is `is_admin()`, which is intentionally required by the live RLS policies and has no caller-controlled arguments.
 - Verified TypeScript compilation and Expo web export.
-- Upgraded the complete application foundation from Expo 54 / React Native 0.79 to Expo 57 / React Native 0.86 / React 19.2, with compatible Router, Supabase, TanStack Query, tRPC, and native modules.
+- Upgraded the complete application foundation from Expo 54 / React Native 0.79 to Expo 57 / React Native 0.86 / React 19.2, with compatible Router, Supabase, TanStack Query, and native modules.
 - Removed the obsolete Rork toolkit, Rork Metro transformer, Rork start commands, and Bun lockfile. BOH now builds independently with standard Expo tooling and a single npm dependency lock.
 - Updated all React Native fill styles and moved splash configuration to the Expo 57 plugin schema.
-- Expo Doctor passes all 20 compatibility checks and the production dependency audit reports zero vulnerabilities.
+- Expo Doctor passes all 20 compatibility checks and the production dependency audit reports no critical findings. Current Expo/Metro dependencies retain upstream high-severity advisories with no available fix.
 - Production Hermes bundles export successfully for both iOS (`entry-541ca94029314f88eaeb1f4002cf7b0b.hbc`) and Android (`entry-ef840194d1f98b4f6fbd12f59438140a.hbc`).
 - EAS release profiles now require current tooling, use remote version sources, auto-increment production releases, and generate an Android App Bundle for the store.
+- Removed the Washington Parq mock dataset and unused tRPC/Hono/Airtable/n8n template clients.
+- Removed the hard-coded legacy anon key and added publishable-key environment support with explicit failure when configuration is absent.
+- Stocked production with 12 canonical active brands, lifecycle SOPs, training modules, channels, and non-fabricated location reference data.
+- Added automated backend contract tests and a GitHub quality gate.
+- Preserved live KPIs and reports; no revenue, order, alert, staff, incident, or financial records were fabricated.
 
 ## Verification commands
 
@@ -35,7 +40,7 @@ npm run verify
 npm audit --omit=dev
 ```
 
-The dependency modernization reduces the original 31 findings, including one critical finding, to zero production findings.
+The dependency modernization removes critical production findings. Upstream Expo/Metro advisories remain tracked until compatible fixes are released.
 
 ## Production checks
 
