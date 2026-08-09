@@ -22,6 +22,10 @@ test('BOH mock and template integration files are removed', () => {
   assert.equal(existsSync(new URL('../lib/brainClient.ts', import.meta.url)), false);
 });
 
+test('false legacy deployment evidence is removed', () => {
+  assert.equal(existsSync(new URL('../app/CASPER_BOH_DEPLOYMENT_REPORT_2026-01-15.md', import.meta.url)), false);
+});
+
 test('BOH seed is idempotent', () => {
   assert.match(migration, /where not exists/gi);
 });

@@ -24,7 +24,7 @@ This record applies only to the CASPER GROUP BOH brand and deployment. It does n
 - Updated all React Native fill styles and moved splash configuration to the Expo 57 plugin schema.
 - Expo Doctor passes all 20 compatibility checks and the production dependency audit reports no critical findings. Current Expo/Metro dependencies retain upstream high-severity advisories with no available fix.
 - Production Hermes bundles export successfully for both iOS (`entry-541ca94029314f88eaeb1f4002cf7b0b.hbc`) and Android (`entry-ef840194d1f98b4f6fbd12f59438140a.hbc`).
-- EAS release profiles now require current tooling, use remote version sources, auto-increment production releases, and generate an Android App Bundle for the store.
+- EAS release profiles require current tooling, use remote version sources, auto-increment production releases, and generate an Android App Bundle for the store. The invalid legacy project identifier was removed; a correct EAS project link is still required.
 - Removed the Washington Parq mock dataset and unused tRPC/Hono/Airtable/n8n template clients.
 - Removed the hard-coded legacy anon key and added publishable-key environment support with explicit failure when configuration is absent.
 - Stocked production with 12 canonical active brands, lifecycle SOPs, training modules, channels, and non-fabricated location reference data.
@@ -51,7 +51,7 @@ The dependency modernization removes critical production findings. Upstream Expo
 
 ## Live platform verification
 
-- Vercel production deployment `dpl_AcaJVzhPPzrQgwYzTmLh4Z3cHXW9` is READY at `https://casper-group-boh.vercel.app` and contains the Expo 57 release from commit `4408c40`.
+- Vercel production deployment `dpl_CNmRgxLLaQM9FU3c3uHh981sSexk` is READY at `https://casper-group-boh.vercel.app` and contains commit `d8c2618c992e17b2ed90b89bf6d2256012266218`.
 - Live browser verification confirms the authorized-personnel login screen renders and direct anonymous access to `/admin` redirects to `/auth/login`.
 - Vercel reported no runtime error clusters during the seven-day production check.
 - Supabase security advisors fell from seven notices to two: the intentional `is_admin()` RLS helper and the dashboard-level leaked-password-protection setting.
