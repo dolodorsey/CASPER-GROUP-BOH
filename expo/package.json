@@ -6,21 +6,19 @@
     "start": "expo start",
     "start-web": "expo start --web",
     "start-web-dev": "DEBUG=expo* expo start --web",
+    "test": "node --test tests/*.test.mjs",
     "typecheck": "tsc --noEmit",
-    "verify": "npm run typecheck && npm run vercel-build",
-    "vercel-build": "npx expo export -p web"
+    "verify:backend": "node scripts/verify-backend-config.mjs",
+    "verify": "npm run verify:backend && npm test && npm run typecheck && npm run vercel-build && npm audit --omit=dev --audit-level=critical",
+    "vercel-build": "EXPO_NO_TELEMETRY=1 npx expo export -p web"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.8",
     "@expo/vector-icons": "^15.0.3",
-    "@hono/trpc-server": "^0.4.2",
     "@nkzw/create-context-hook": "^1.1.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@supabase/supabase-js": "^2.109.0",
     "@tanstack/react-query": "^5.101.4",
-    "@trpc/client": "^11.18.0",
-    "@trpc/react-query": "^11.18.0",
-    "@trpc/server": "^11.18.0",
     "expo": "~57.0.9",
     "expo-asset": "~57.0.8",
     "expo-blur": "~57.0.2",
@@ -38,7 +36,6 @@
     "expo-symbols": "~57.0.1",
     "expo-system-ui": "~57.0.2",
     "expo-web-browser": "~57.0.2",
-    "hono": "^4.11.4",
     "lucide-react-native": "0.447.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -49,8 +46,6 @@
     "react-native-screens": "~4.26.0",
     "react-native-svg": "15.15.4",
     "react-native-web": "^0.21.0",
-    "superjson": "^2.2.6",
-    "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },
   "devDependencies": {

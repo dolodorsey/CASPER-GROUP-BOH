@@ -3,14 +3,14 @@ import { Platform } from 'react-native';
 
 // The public client key is safe to ship, but authorization must always be
 // enforced by verified sessions and database row-level security.
-const supabaseUrl =
-  process.env.EXPO_PUBLIC_SUPABASE_URL ||
-  'https://qhgmukwoennurwuvmbhy.supabase.co';
-const supabaseAnonKey =
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoZ211a3dvZW5udXJ3dXZtYmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5ODI1NDksImV4cCI6MjA4MjU1ODU0OX0.DhNcV9_h8_wdvKHfGyK9kdxKTlT6ZJ1t-JbCKBGD-Kw';
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+const supabasePublishableKey =
+  process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ??
+  '';
 
-export const isSupabaseConfigured = true;
+export const isSupabaseConfigured =
+  supabaseUrl.length > 0 && supabasePublishableKey.length > 0;
 
 let supabaseInstance: SupabaseClient | null = null;
 
@@ -28,8 +28,9 @@ const getStorage = () => {
 };
 
 try {
+  if (!isSupabaseConfigured) throw new Error('Supabase environment is incomplete');
   const storage = getStorage();
-  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+  supabaseInstance = createClient(supabaseUrl, supabasePublishableKey, {
     auth: {
       ...(storage ? { storage } : {}),
       autoRefreshToken: true,
@@ -42,23 +43,37 @@ try {
   supabaseInstance = null;
 }
 
-const createMockClient = (): SupabaseClient => {
-  const mockAuth = {
-    getSession: async () => ({ data: { session: null }, error: null }),
+const createUnavailableClient = (): SupabaseClient => {
+  const error = { message: 'CASPER BOH is not configured. Set the Supabase URL and publishable key.' };
+  const unavailableAuth = {
+    getSession: async () => ({ data: { session: null }, error }),
+    getUser: async () => ({ data: { user: null }, error }),
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-    signOut: async () => ({ error: null }),
-    signInWithPassword: async () => ({ data: { session: null }, error: { message: 'Supabase not configured' } }),
-    signInWithOAuth: async () => ({ data: { url: null }, error: { message: 'Supabase not configured' } }),
+    signOut: async () => ({ error }),
+    signInWithPassword: async () => ({ data: { session: null }, error }),
+    signInWithOAuth: async () => ({ data: { url: null }, error }),
   };
-  
-  const mockFrom = () => ({
-    select: () => ({ eq: () => ({ single: async () => ({ data: null, error: { message: 'Not configured' } }), order: async () => ({ data: [], error: null }), data: [], error: null }), order: () => ({ data: [], error: null }), data: [], error: null }),
-    insert: async () => ({ data: null, error: { message: 'Not configured' } }),
-    update: async () => ({ data: null, error: { message: 'Not configured' } }),
-    delete: async () => ({ data: null, error: { message: 'Not configured' } }),
+
+  const unavailableQuery: any = {
+    select: () => unavailableQuery,
+    eq: () => unavailableQuery,
+    in: () => unavailableQuery,
+    gte: () => unavailableQuery,
+    lte: () => unavailableQuery,
+    order: () => unavailableQuery,
+    limit: () => unavailableQuery,
+    single: async () => ({ data: null, error }),
+    then: (resolve: (value: { data: null; error: typeof error }) => void) => resolve({ data: null, error }),
+  };
+  const unavailableFrom = () => ({
+    select: () => unavailableQuery,
+    insert: () => unavailableQuery,
+    update: () => unavailableQuery,
+    upsert: () => unavailableQuery,
+    delete: () => unavailableQuery,
   });
-  
-  return { auth: mockAuth, from: mockFrom } as unknown as SupabaseClient;
+
+  return { auth: unavailableAuth, from: unavailableFrom } as unknown as SupabaseClient;
 };
 
-export const supabase: SupabaseClient = supabaseInstance || createMockClient();
+export const supabase: SupabaseClient = supabaseInstance || createUnavailableClient();

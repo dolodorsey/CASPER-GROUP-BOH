@@ -1,8 +1,8 @@
 # 📊 Project Status - Rork Casper Control Center
 
-**Last Updated**: January 4, 2026, 5:20 AM EST*
-**Overall Progress**: 100% Complete ✅*
-**Status**: ✅ Production Ready - Issue #1 Complete
+**Last Updated**: August 9, 2026
+**Overall Progress**: Production beta
+**Status**: Web release verified; operating data stocked; store automation pending EAS/App Store credentials
 ---
 
 ## ✅ Infrastructure (100% Complete)
@@ -43,22 +43,14 @@
 
 ---
 
-## 🎯 Remaining Work (10%)
+## Remaining release gates
 
-1. [✅] ~~Fix AdminProvider.tsx mock imports~~ - COMPLETE2
-2. . [ ] Delete /mocks directory  
-3. [ ] Build Android APK/AAB
-4. [ ] Build iOS IPA
-5. [ ] Submit to app stores
+1. [x] Remove mock data and unused template backends.
+2. [x] Stock the authenticated operating core with 12 active brands, SOPs, training, channels, and location references.
+3. [x] Add automated tests, backend contract verification, TypeScript, web export, dependency audit, and GitHub quality gate.
+4. [ ] Link the repository to a valid EAS project and store non-interactive signing/submission credentials.
+5. [ ] Run the automated EAS production workflow; do not perform a manual iOS deployment.
 
-**Estimated Time**: 2-4 hours
-
----
-
-## 📦 Next Deployment
-
-**Ready for**: Mobile app store submission  
-**Blocker**: AdminProvider.tsx mock removal  
-**Priority**: High
+Revenue, KPI, order, alert, incident, and staff records must always remain live operating data. They must never be seeded or fabricated for presentation.
 
 See [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md) for detailed instructions.
