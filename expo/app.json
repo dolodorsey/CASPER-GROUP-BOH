@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "app.rork.casper-control-empire-launch",
-      "buildNumber": "2",
+      "buildNumber": "5",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -22,7 +22,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "app.rork.casper_boh",
-      "versionCode": 2
+      "versionCode": 5
     },
     "web": {
       "bundler": "metro",

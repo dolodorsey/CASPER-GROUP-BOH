@@ -127,6 +127,9 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm ci --legacy-peer-deps --no-audit --no-fund
 
+      - name: Patch expo-modules-jsi for Xcode 26 / Swift 6.2
+        run: node scripts/patch-expo-modules-jsi.mjs
+
       - name: Quality gate
         run: |
           npx tsc --noEmit
@@ -139,6 +142,9 @@ jobs:
 
       - name: Install iOS pods
         working-directory: expo/ios
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
         run: pod install --repo-update
 
       - name: Discover generated workspace and scheme
