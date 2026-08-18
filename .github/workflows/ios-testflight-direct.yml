@@ -132,7 +132,7 @@ jobs:
 
       - name: Quality gate
         run: |
-          npx tsc --noEmit
+          npm run typecheck
           npx expo-doctor || true
 
       - name: Generate production iOS project
