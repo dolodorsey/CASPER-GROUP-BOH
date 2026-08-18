@@ -2,7 +2,7 @@
   "expo": {
     "name": "Casper Group BOH",
     "slug": "casper-control-center",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "owner": "thekollective",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,14 +10,19 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.rork.casper-boh"
+      "bundleIdentifier": "app.rork.casper-control-empire-launch",
+      "buildNumber": "2",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.casper_boh"
+      "package": "app.rork.casper_boh",
+      "versionCode": 2
     },
     "web": {
       "bundler": "metro",

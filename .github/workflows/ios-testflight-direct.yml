@@ -1,0 +1,241 @@
+name: Casper BOH Direct TestFlight
+
+# Drop this at .github/workflows/ios-testflight-direct.yml in
+# github.com/dolodorsey/CASPER-GROUP-BOH
+#
+# Credentials are fetched at run time from the Supabase broker
+# github-casper-boh-apple-release-credentials, gated on this repo's GitHub OIDC
+# identity. No GitHub secrets are required. If you rename this file or the
+# default branch is not `main`, update the matching constants in the broker or
+# every run will 403.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'expo/app/**'
+      - 'expo/assets/**'
+      - 'expo/components/**'
+      - 'expo/constants/**'
+      - 'expo/providers/**'
+      - 'expo/lib/**'
+      - 'expo/hooks/**'
+      - 'expo/package.json'
+      - 'expo/package-lock.json'
+      - 'expo/app.json'
+      - '.github/workflows/ios-testflight-direct.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: casper-boh-direct-testflight
+  cancel-in-progress: false
+
+jobs:
+  build-sign-upload:
+    runs-on: macos-latest
+    timeout-minutes: 75
+    defaults:
+      run:
+        working-directory: expo
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Load Casper BOH Apple release identity from Supabase
+        shell: bash
+        working-directory: .
+        env:
+          BROKER_URL: https://dzlmtvodpyhetvektfuo.supabase.co/functions/v1/github-casper-boh-apple-release-credentials
+        run: |
+          set -euo pipefail
+          TOKEN_FILE="$RUNNER_TEMP/github-oidc.json"
+          CRED_FILE="$RUNNER_TEMP/casper-boh-release.json"
+          P12_PATH="$RUNNER_TEMP/casper-boh-distribution.p12"
+          PROFILE_PATH="$RUNNER_TEMP/casper-boh-app-store.mobileprovision"
+          PASSWORD_PATH="$RUNNER_TEMP/casper-boh-p12-password"
+          ASC_KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
+
+          curl --fail --silent --show-error \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=casper-boh-apple-release" \
+            -o "$TOKEN_FILE"
+          OIDC_TOKEN=$(python3 - "$TOKEN_FILE" <<'PY'
+          import json,sys
+          print(json.load(open(sys.argv[1]))['value'])
+          PY
+          )
+          curl --fail --silent --show-error -X POST \
+            -H "Authorization: Bearer ${OIDC_TOKEN}" \
+            -H 'Content-Type: application/json' \
+            "$BROKER_URL" -o "$CRED_FILE"
+
+          python3 - "$CRED_FILE" "$P12_PATH" "$PROFILE_PATH" "$PASSWORD_PATH" "$ASC_KEY_PATH" "$GITHUB_ENV" <<'PY'
+          import base64,json,os,sys
+          source,p12_path,profile_path,password_path,key_path,env_path=sys.argv[1:]
+          data=json.load(open(source))
+          required=['app_store_app_id','key_id','issuer_id','team_id','key_content_base64','distribution_private_key_p12_base64','distribution_private_key_p12_password','provisioning_profile_content_base64','provisioning_profile_name','provisioning_profile_uuid','bundle_identifier']
+          missing=[k for k in required if not str(data.get(k,'')).strip()]
+          if missing: raise SystemExit('Release broker missing: '+','.join(missing))
+          open(p12_path,'wb').write(base64.b64decode(data['distribution_private_key_p12_base64']))
+          open(profile_path,'wb').write(base64.b64decode(data['provisioning_profile_content_base64']))
+          open(password_path,'w',encoding='utf-8').write(str(data['distribution_private_key_p12_password']))
+          open(key_path,'wb').write(base64.b64decode(data['key_content_base64']))
+          for p in (p12_path,profile_path,password_path,key_path): os.chmod(p,0o600)
+          with open(env_path,'a',encoding='utf-8') as env:
+              env.write(f"ASC_APP_ID={data['app_store_app_id']}\n")
+              env.write(f"ASC_KEY_ID={data['key_id']}\n")
+              env.write(f"ASC_ISSUER_ID={data['issuer_id']}\n")
+              env.write(f"APPLE_TEAM_ID={data['team_id']}\n")
+              env.write(f"IOS_PROFILE_NAME={data['provisioning_profile_name']}\n")
+              env.write(f"IOS_PROFILE_UUID={data['provisioning_profile_uuid']}\n")
+              env.write(f"IOS_BUNDLE_ID={data['bundle_identifier']}\n")
+          PY
+          LOCAL_PROFILE_UUID=$(python3 - "$CRED_FILE" <<'PY'
+          import json,sys
+          print(json.load(open(sys.argv[1]))['provisioning_profile_uuid'])
+          PY
+          )
+          ASC_KEY_ID_LOCAL=$(python3 - "$CRED_FILE" <<'PY'
+          import json,sys
+          print(json.load(open(sys.argv[1]))['key_id'])
+          PY
+          )
+
+          KEYCHAIN_PASSWORD=$(uuidgen)
+          KEYCHAIN_PATH="$RUNNER_TEMP/casper-boh-release.keychain-db"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
+          security default-keychain -s "$KEYCHAIN_PATH"
+          security import "$P12_PATH" -P "$(cat "$PASSWORD_PATH")" -A -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/${LOCAL_PROFILE_UUID}.mobileprovision"
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          cp "$ASC_KEY_PATH" "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID_LOCAL}.p8"
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+          rm -f "$TOKEN_FILE" "$CRED_FILE" "$P12_PATH" "$PROFILE_PATH" "$PASSWORD_PATH" "$ASC_KEY_PATH"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Install JavaScript dependencies
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Quality gate
+        run: |
+          npx tsc --noEmit
+          npx expo-doctor || true
+
+      - name: Generate production iOS project
+        env:
+          EXPO_PUBLIC_APP_ENV: production
+        run: npx expo prebuild --platform ios --clean --no-install
+
+      - name: Install iOS pods
+        working-directory: expo/ios
+        run: pod install --repo-update
+
+      - name: Discover generated workspace and scheme
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The archive MUST use the top-level CocoaPods workspace (ios/*.xcworkspace),
+          # never the nested ios/*.xcodeproj/project.xcworkspace — otherwise the Pods
+          # module maps are absent and Swift fails with "no such module 'Expo'".
+          WORKSPACE=$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)
+          [[ -n "$WORKSPACE" ]] || { echo 'No top-level CocoaPods workspace found in ios/'; exit 1; }
+          case "$WORKSPACE" in
+            *.xcodeproj/*) echo "Refusing nested project workspace: $WORKSPACE"; exit 1 ;;
+          esac
+          if ! grep -q 'Pods.xcodeproj' "$WORKSPACE/contents.xcworkspacedata"; then
+            echo "CocoaPods integration missing: $WORKSPACE does not reference Pods.xcodeproj"
+            cat "$WORKSPACE/contents.xcworkspacedata" || true
+            exit 1
+          fi
+          [[ -d ios/Pods/Pods.xcodeproj ]] || { echo 'ios/Pods/Pods.xcodeproj missing'; exit 1; }
+          xcodebuild -workspace "$WORKSPACE" -list -json > "$RUNNER_TEMP/xcode-list.json"
+          EXPECTED_SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          SCHEME=$(python3 - "$RUNNER_TEMP/xcode-list.json" "$EXPECTED_SCHEME" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1]))
+          expected=sys.argv[2]
+          schemes=d.get('workspace',{}).get('schemes') or d.get('project',{}).get('schemes') or []
+          if not schemes: raise SystemExit('No Xcode scheme found')
+          # The CocoaPods workspace also exposes a scheme per pod; schemes[0] is not
+          # safe here. Pin to the app scheme and fail closed if it is absent.
+          if expected not in schemes:
+              raise SystemExit('Expected app scheme %s not found. Available: %s' % (expected, ', '.join(schemes)))
+          print(expected)
+          PY
+          )
+          echo "IOS_WORKSPACE=expo/$WORKSPACE" >> "$GITHUB_ENV"
+          echo "IOS_SCHEME=$SCHEME" >> "$GITHUB_ENV"
+          echo "Using workspace $WORKSPACE / scheme $SCHEME"
+
+      - name: Archive signed App Store build
+        shell: bash
+        working-directory: .
+        run: |
+          set -euo pipefail
+          ARCHIVE_PATH="$RUNNER_TEMP/CasperBOH.xcarchive"
+          xcodebuild \
+            -workspace "$IOS_WORKSPACE" \
+            -scheme "$IOS_SCHEME" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$ARCHIVE_PATH" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY='Apple Distribution' \
+            PROVISIONING_PROFILE_SPECIFIER="$IOS_PROFILE_NAME" \
+            CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER}" \
+            archive
+          echo "IOS_ARCHIVE_PATH=$ARCHIVE_PATH" >> "$GITHUB_ENV"
+
+      - name: Export signed IPA
+        shell: bash
+        working-directory: .
+        run: |
+          set -euo pipefail
+          EXPORT_DIR="$RUNNER_TEMP/casper-boh-export"
+          OPTIONS="$RUNNER_TEMP/ExportOptions.plist"
+          mkdir -p "$EXPORT_DIR"
+          cat > "$OPTIONS" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>teamID</key><string>${APPLE_TEAM_ID}</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>signingCertificate</key><string>Apple Distribution</string>
+            <key>provisioningProfiles</key><dict>
+              <key>${IOS_BUNDLE_ID}</key><string>${IOS_PROFILE_NAME}</string>
+            </dict>
+            <key>stripSwiftSymbols</key><true/>
+            <key>uploadSymbols</key><true/>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath "$IOS_ARCHIVE_PATH" -exportPath "$EXPORT_DIR" -exportOptionsPlist "$OPTIONS"
+          IPA=$(find "$EXPORT_DIR" -name '*.ipa' -print -quit)
+          [[ -s "$IPA" ]] || { echo 'Signed IPA not produced'; exit 1; }
+          echo "IOS_IPA=$IPA" >> "$GITHUB_ENV"
+          ls -lh "$IPA"
+
+      - name: Upload signed build to App Store Connect / TestFlight
+        shell: bash
+        working-directory: .
+        run: |
+          set -euo pipefail
+          echo "Uploading Casper BOH build for App Store app ${ASC_APP_ID}…"
+          xcrun altool --upload-app \
+            --file "$IOS_IPA" \
+            --type ios \
+            --apiKey "$ASC_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID"
