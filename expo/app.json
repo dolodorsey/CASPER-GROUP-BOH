@@ -10,7 +10,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.rork.casper-control-empire-launch",
+      "bundleIdentifier": "app.rork.casper-boh",
       "buildNumber": "6",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
