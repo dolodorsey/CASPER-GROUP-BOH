@@ -6,6 +6,7 @@
     "start": "expo start",
     "start-web": "expo start --web",
     "start-web-dev": "DEBUG=expo* expo start --web",
+    "pretest": "node scripts/apply-boh-intelligence.mjs",
     "test": "node --test tests/*.test.mjs",
     "typecheck": "tsc --noEmit",
     "verify:backend": "node scripts/verify-backend-config.mjs",
