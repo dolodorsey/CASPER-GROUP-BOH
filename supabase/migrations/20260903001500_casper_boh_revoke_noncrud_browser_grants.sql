@@ -1,23 +1,25 @@
 -- CASPER GROUP BOH least-privilege hardening.
--- Scope is strictly public.cg_* tables in the dedicated Casper Group database.
--- Preserve existing CRUD grants and row-level security behavior while removing
--- table-level capabilities that browser roles do not need for normal app flows.
+-- Scope is strictly public.cg_* relations in the dedicated Casper Group database.
+-- Preserve existing CRUD/SELECT grants and row-level security behavior while
+-- removing table-level capabilities browser roles do not need for normal flows.
 
 DO $$
 DECLARE
-  target_table record;
+  target_relation record;
 BEGIN
-  FOR target_table IN
-    SELECT schemaname, tablename
-    FROM pg_tables
-    WHERE schemaname = 'public'
-      AND tablename ~ '^cg_'
-    ORDER BY tablename
+  FOR target_relation IN
+    SELECT DISTINCT table_schema, table_name
+    FROM information_schema.role_table_grants
+    WHERE table_schema = 'public'
+      AND table_name ~ '^cg_'
+      AND grantee IN ('anon', 'authenticated')
+      AND privilege_type IN ('TRUNCATE', 'REFERENCES', 'TRIGGER')
+    ORDER BY table_name
   LOOP
     EXECUTE format(
       'REVOKE TRUNCATE, REFERENCES, TRIGGER ON TABLE %I.%I FROM anon, authenticated',
-      target_table.schemaname,
-      target_table.tablename
+      target_relation.table_schema,
+      target_relation.table_name
     );
   END LOOP;
 END
