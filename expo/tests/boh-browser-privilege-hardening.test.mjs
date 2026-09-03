@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const migration = fs.readFileSync(
-  new URL('../../supabase/migrations/20260903001500_casper_boh_revoke_noncrud_browser_grants.sql', import.meta.url),
+  new URL('../../supabase/migrations/20260903001817_casper_boh_revoke_noncrud_browser_grants.sql', import.meta.url),
   'utf8',
 );
 
