@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run verify:backend && npm test && npm run typecheck && npm run audit:production && EXPO_NO_TELEMETRY=1 EXPO_PUBLIC_BUILD_SHA=$VERCEL_GIT_COMMIT_SHA npx expo export -p web --clear",
+  "buildCommand": "node scripts/apply-boh-intelligence.mjs && npm run verify:backend && npm test && npm run typecheck && npm run audit:production && EXPO_NO_TELEMETRY=1 EXPO_PUBLIC_BUILD_SHA=$VERCEL_GIT_COMMIT_SHA npx expo export -p web --clear",
   "outputDirectory": "dist",
   "framework": null,
   "installCommand": "npm ci --ignore-scripts",
